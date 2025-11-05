@@ -1,0 +1,33 @@
+{
+  "name": "media-prototype-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "NODE_ENV=production npx tsc --project tsconfig.build.json",
+    "start": "NODE_ENV=production node dist/index.js",
+    "dev": "NODE_ENV=development nodemon --exec ts-node ./src/index.ts",
+    "test": "NODE_ENV=test NODE_OPTIONS=\"--experimental-vm-modules --loader ts-node/esm\" jest",
+    "test:watch": "NODE_ENV=test NODE_OPTIONS=\"--experimental-vm-modules --loader ts-node/esm\" jest --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.10.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  }
+}
