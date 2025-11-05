@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { fibonacciService } from "@/services/computing/fibonacci.service.js";
+import { fibonacciService } from "@/services/computing/fibonacci.service";
 
 export const getFibonacci = (req: Request, res: Response) => {
   try {

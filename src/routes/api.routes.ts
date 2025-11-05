@@ -1,5 +1,5 @@
 import { Router } from "express";
-import computingRouter from "@/routes/computing/index";
+import computingRouter from "./computing";
 
 const router = Router();
 

@@ -1,6 +1,6 @@
-import express from "express";
-import type { Request, Response, Application, NextFunction } from "express";
-import apiRoutes from "@/routes/api.routes";
+import express from 'express';
+import type { Request, Response, Application, NextFunction } from 'express';
+import apiRoutes from '@/routes/api.routes';
 
 /**
  * Creates and configures an Express application.
@@ -19,19 +19,15 @@ const createApp = (): Application => {
   app.use(express.urlencoded({ extended: true }));
 
   // --- 2. API Routes ---
-  app.use("/", apiRoutes);
+  app.use('/api', apiRoutes);
 
-  app.get("/", (req: Request, res: Response) => {
-    res.send("Hello, TypeScript with Express!");
+  app.get('/health', (req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok' });
   });
 
-  // Simple health check route
-  app.get("/health", (req: Request, res: Response) => {
-    res.status(200).json({ status: "ok" });
+  app.get('/', (req: Request, res: Response) => {
+    res.send('Hello, TypeScript with Express!');
   });
-
-  // Mount API routes
-  app.use("/api", apiRoutes);
 
   // --- 3. 404 Not Found Handler ---
   // This catches any requests that don't match the routes above
@@ -49,7 +45,7 @@ const createApp = (): Application => {
     res.json({
       message: err.message,
       // You might want to hide the stack trace in production
-      stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
+      stack: process.env['NODE_ENV'] === 'production' ? '🥞' : err.stack,
     });
   });
 

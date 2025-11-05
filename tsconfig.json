@@ -1,34 +1,56 @@
 {
-  "ts-node": {
-    "esm": true,
-    "require": [
-      "tsconfig-paths/register"
-    ]
-  },
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "module": "esnext",
-    "target": "esnext",
+    // Module & Target
+    "module": "ESNext",
+    "target": "ES2022",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    // Output
+    "outDir": "./dist",
+    "rootDir": "./src",
     "noEmit": true,
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
+    // Strict Type Checking (Maximum Safety)
+    "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "strict": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    // Module Resolution & Interop
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "6.0",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    // Path Mapping
     "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
+      ],
+      "@/utils/*": [
+        "./src/utils/*"
+      ],
+      "@/services/*": [
+        "./src/services/*"
+      ],
+      "@/controllers/*": [
+        "./src/controllers/*"
+      ],
+      "@/routes/*": [
+        "./src/routes/*"
       ]
     }
   },
@@ -37,6 +59,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ]
 }
