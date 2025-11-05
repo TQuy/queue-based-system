@@ -9,8 +9,8 @@
     "dev:type-check": "concurrently \"tsc --noEmit --watch\" \"tsx watch src/index.ts\"",
     "build": "tsc --project tsconfig.build.json",
     "start": "node dist/index.js",
-    "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest",
-    "test:watch": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --watch",
+    "test": "NODE_ENV=test NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "test:watch": "NODE_ENV=test NODE_OPTIONS=\"--experimental-vm-modules\" jest --watch",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "lint": "eslint src/**/*.ts --fix",
@@ -36,6 +36,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",

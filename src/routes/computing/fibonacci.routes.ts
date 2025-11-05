@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getFibonacci,
   getFibonacciSequence,
-} from '../../controllers/computing/fibonacci.controller.js';
+} from '@/controllers/computing/fibonacci.controller';
 
 const router = Router();
 
