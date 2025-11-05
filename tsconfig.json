@@ -32,11 +32,7 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     // Path Mapping
-    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
       "@/types/*": [
         "./src/types/*"
       ],
@@ -51,7 +47,10 @@
       ],
       "@/routes/*": [
         "./src/routes/*"
-      ]
+      ],
+      "@/*": [
+        "./src/*"
+      ],
     }
   },
   "include": [

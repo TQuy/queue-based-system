@@ -17,19 +17,31 @@
     "lint:check": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "swagger:generate": "tsx scripts/swagger-generate.ts",
+    "swagger:dev": "npm run swagger:generate && npm run dev",
     "validate": "npm run type-check && npm run lint:check && npm run format:check && npm run test"
   },
-  "keywords": ["express", "typescript", "nodejs", "api", "strict-types"],
+  "keywords": [
+    "express",
+    "typescript",
+    "nodejs",
+    "api",
+    "strict-types"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
     "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
     "concurrently": "^9.1.0",
@@ -37,6 +49,7 @@
     "jest": "^30.2.0",
     "prettier": "^3.3.3",
     "supertest": "^7.1.4",
+    "swagger-autogen": "^2.23.7",
     "ts-jest": "^29.4.5",
     "tsx": "^4.19.1",
     "typescript": "^5.9.3"

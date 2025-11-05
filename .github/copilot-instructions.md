@@ -9,6 +9,7 @@ This is a TypeScript Express.js server prototype with ESM modules and strict typ
 - **ESM-first**: Project uses `"type": "module"` in `package.json`
 - **Import style**: Use `import`/`export` syntax, avoid `require()`
 - **Type imports**: Explicitly import types with `import type { ... }`
+- Using path alias instead of relative import
 
 ### TypeScript Configuration
 - **Strict typing**: `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` are enabled
@@ -64,3 +65,14 @@ app.get("/api/example", (req: Request, res: Response) => {
 - Use functional programming if possible, but can switch to hybrid approach between OOP and functional programming if closure is hard to comprehend, and having a explicit state is better.
 - We will try to split code into three layers: `Controller`, `Service` and finally `Utility`. The `Utility` layer hold the re-usable, pure functions such as function to calculate fibonacci number.
 - Don't update the path alias `@/*` to `../*` in files that are not test files
+
+## API Documentation with Swagger
+- **Swagger UI**: Available at `http://localhost:3000/api-docs` when server is running
+- **Auto-generation**: Use `npm run swagger:generate` to create swagger.json from code annotations
+- **Development**: Use `npm run swagger:dev` to generate docs and start server
+- **Annotations**: Add JSDoc comments with @swagger tags above route handlers
+- **Configuration**: Swagger setup is in `src/config/swagger.ts`
+- Check if the API docs need to be updated whenver you make a change. If yes then implement it.
+
+## Setup third party libraries
+- Give me the command to install the libraries so that I can install myself, so that the installed version is update-to-date and not conflicted with other packages.

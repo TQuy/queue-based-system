@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response, Application, NextFunction } from 'express';
 import apiRoutes from '@/routes/api.routes';
+import { setupSwagger } from '@/config/swagger';
 
 /**
  * Creates and configures an Express application.
@@ -9,7 +10,7 @@ import apiRoutes from '@/routes/api.routes';
  *
  * @returns {Application} The configured Express application instance.
  */
-const createApp = (): Application => {
+export const createApp = (): Application => {
   const app: Application = express();
 
   // --- 1. Core Middleware ---
@@ -18,16 +19,21 @@ const createApp = (): Application => {
   // Enable URL-encoded body parsing
   app.use(express.urlencoded({ extended: true }));
 
-  // --- 2. API Routes ---
-  app.use('/api', apiRoutes);
+  // --- 2. Swagger Documentation ---
+  setupSwagger(app);
 
-  app.get('/health', (req: Request, res: Response) => {
+  // --- 3. API Routes ---
+  app.get('/', (_req: Request, res: Response) => {
+    res.send('Hello, TypeScript with Express!');
+  });
+
+  // Simple health check route
+  app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'ok' });
   });
 
-  app.get('/', (req: Request, res: Response) => {
-    res.send('Hello, TypeScript with Express!');
-  });
+  // Mount API routes
+  app.use('/api', apiRoutes);
 
   // --- 3. 404 Not Found Handler ---
   // This catches any requests that don't match the routes above
@@ -39,7 +45,7 @@ const createApp = (): Application => {
 
   // --- 4. Global Error Handler ---
   // This is the final middleware that catches all errors
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     res.status(statusCode);
     res.json({
@@ -51,6 +57,3 @@ const createApp = (): Application => {
 
   return app;
 };
-
-// Export the factory function
-export default createApp;
