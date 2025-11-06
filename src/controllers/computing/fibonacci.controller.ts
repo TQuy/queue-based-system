@@ -151,3 +151,7 @@ export const getFibonacciSequence = (req: Request, res: Response): void => {
     });
   }
 };
+
+export const scheduleFibonacciTask = (req: Request, res: Response): void => {
+
+}

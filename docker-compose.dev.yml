@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # This is your queue broker service
+  rabbitmq:
+    image: "rabbitmq:3.13-management" # Use the 'management' tag to get a UI
+    container_name: "local_rabbitmq"
+    ports:
+      # [HOST_PORT]:[CONTAINER_PORT]
+      - "5672:5672"   # The main AMQP port for your NestJS app
+      - "15672:15672"  # The web management UI (access at http://localhost:15672)
+    volumes:
+      # This saves your queue data even if you stop/remove the container
+      - "rabbitmq_data:/var/lib/rabbitmq"
+    environment:
+      # Default user/pass is guest/guest
+      - "RABBITMQ_DEFAULT_USER=myuser"
+      - "RABBITMQ_DEFAULT_PASS=mypassword"
+
+# This defines the named volume we used above
+volumes:
+  rabbitmq_data:
