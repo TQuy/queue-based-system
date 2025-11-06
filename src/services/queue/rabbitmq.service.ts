@@ -86,7 +86,14 @@ class RabbitMQService {
   /**
    * Sends a message to a specific queue using the dedicated publish channel.
    */
-  async sendMessage(queue: string, message: any): Promise<boolean> {
+  async sendMessage(
+    queue: string,
+    message: any,
+    options?: {
+      persistent?: boolean;
+      durable?: boolean;
+    }
+  ): Promise<boolean> {
     if (!this.publishChannel) {
       console.error('[AMQP] No publish channel found. Is service connected?');
       return false;
@@ -94,12 +101,14 @@ class RabbitMQService {
 
     try {
       // Assert the queue
-      await this.publishChannel.assertQueue(queue, { durable: true });
+      await this.publishChannel.assertQueue(queue, {
+        durable: options?.durable ?? true,
+      });
 
       // Send the message
       const messageBuffer = Buffer.from(JSON.stringify(message));
       this.publishChannel.sendToQueue(queue, messageBuffer, {
-        persistent: true,
+        persistent: options?.persistent ?? true,
       });
 
       console.log(`[AMQP] Message sent to queue '${queue}'`);
@@ -175,6 +184,7 @@ class RabbitMQService {
   /**
    * Comprehensive cleanup method for test environments.
    * Deletes specified queues and closes all channels and connections.
+   * If the connection is kept, also keep the publish channel.
    */
   async cleanup(queues?: string[], closeConnection?: boolean): Promise<void> {
     try {
@@ -187,10 +197,10 @@ class RabbitMQService {
 
       // Close channels
       await this.closeConsumeChannel();
-      await this.closePublishChannel();
 
       // Close connection
       if (closeConnection && this.conn) {
+        await this.closePublishChannel();
         await this.conn.close();
         this.conn = null;
         console.log('[AMQP] Connection closed');
