@@ -26,6 +26,15 @@ class RabbitMQService {
     return RabbitMQService.instance;
   }
 
+  async createChannel() {
+    try {
+      const channel = await this.conn!.createChannel();
+      return channel;
+    } catch (err) {
+      throw new Error('Failed to create channel', { cause: err });
+    }
+  }
+
   /**
    * Connects to the RabbitMQ server and creates separate channels
    * for publishing and consuming.
@@ -81,6 +90,14 @@ class RabbitMQService {
       // Retry connection after a delay
       setTimeout(() => this.connect(), 5000);
     }
+  }
+
+  getConsumerChannel(): Channel | null {
+    return this.consumeChannel;
+  }
+
+  getPublishChannel(): Channel | null {
+    return this.publishChannel;
   }
 
   /**
@@ -147,6 +164,7 @@ class RabbitMQService {
       console.log(`[AMQP] Waiting for messages in queue: ${queue}`);
 
       this.consumeChannel.consume(queue, async (msg: ConsumeMessage | null) => {
+        console.log(`[AMQP] Message received in queue: ${JSON.stringify(msg)}`);
         if (msg !== null) {
           try {
             // Process the message
@@ -195,15 +213,12 @@ class RabbitMQService {
         }
       }
 
-      // Close channels
-      await this.closeConsumeChannel();
-
       // Close connection
       if (closeConnection && this.conn) {
         await this.closePublishChannel();
+        await this.closeConsumeChannel();
         await this.conn.close();
         this.conn = null;
-        console.log('[AMQP] Connection closed');
       }
     } catch (err) {
       console.error('[AMQP] Error during cleanup:', err);

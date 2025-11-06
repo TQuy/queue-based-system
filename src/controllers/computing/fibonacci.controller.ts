@@ -120,3 +120,67 @@ export const getFibonacciSequence = (req: Request, res: Response): void => {
     });
   }
 };
+
+/**
+ * @swagger
+ * /api/computing/fibonacci/schedule:
+ *   get:
+ *     tags: [Computing]
+ *     summary: Schedule Fibonacci calculation
+ *     description: Schedules a Fibonacci calculation to be processed asynchronously via message queue
+ *     parameters:
+ *       - in: query
+ *         name: n
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           maximum: 100
+ *         description: Position in Fibonacci sequence to calculate (0-100)
+ *     responses:
+ *       200:
+ *         description: Calculation successfully scheduled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ScheduleResponse'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to schedule calculation or internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ScheduleResponse'
+ */
+export const scheduleFibonacciCalculation = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const n = validateFibonacciInput.parse(req.query['n']);
+    const scheduled = await fibonacciService.scheduleFibonacciCalculation(n);
+    if (scheduled) {
+      res.json({
+        message: `Fibonacci calculation for position ${n} has been scheduled.`,
+      });
+    } else {
+      res.status(500).json({
+        message: 'Failed to schedule Fibonacci calculation.',
+      });
+    }
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errorRes = getZodErrorResponse(error);
+      res.status(400).json(errorRes);
+      return;
+    }
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
+};

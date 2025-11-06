@@ -82,6 +82,18 @@ const swaggerOptions: swaggerJsdoc.Options = {
           },
           required: ['count', 'sequence'],
         },
+        ScheduleResponse: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string',
+              example:
+                'Fibonacci calculation for position 10 has been scheduled.',
+              description: 'Confirmation message for scheduled calculation',
+            },
+          },
+          required: ['message'],
+        },
         ErrorResponse: {
           type: 'object',
           properties: {
@@ -91,7 +103,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
               description: 'Error message describing what went wrong',
             },
           },
-          required: ['error'],
+          required: ['message'],
         },
       },
     },

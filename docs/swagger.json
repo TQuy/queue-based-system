@@ -68,6 +68,22 @@
         }
       }
     },
+    "/computing/fibonacci/schedule": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "description": "",
@@ -100,6 +116,22 @@
         }
       }
     },
+    "/schedule": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/fibonacci/": {
       "get": {
         "description": "",
@@ -117,6 +149,22 @@
       }
     },
     "/fibonacci/sequence": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/fibonacci/schedule": {
       "get": {
         "description": "",
         "responses": {

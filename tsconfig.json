@@ -48,6 +48,9 @@
       "@/routes/*": [
         "./src/routes/*"
       ],
+      "@/workers/*": [
+        "./src/workers/*"
+      ],
       "@/*": [
         "./src/*"
       ],

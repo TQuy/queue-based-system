@@ -18,7 +18,7 @@
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "swagger:generate": "tsx scripts/swagger-generate.ts",
-    "swagger:dev": "npm run swagger:generate && npm run dev",
+    "swagger:dev": "NODE_ENV=development npm run swagger:generate && npm run dev",
     "validate": "npm run type-check && npm run lint:check && npm run format:check && npm run test"
   },
   "keywords": [

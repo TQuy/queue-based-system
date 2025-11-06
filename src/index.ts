@@ -2,6 +2,7 @@ import { createApp } from '@/app';
 import dotenv from 'dotenv';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service';
 import path from 'path';
+import { consumerFactory } from './services/queue/consumer.service';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
@@ -32,10 +33,12 @@ const startServer = async () => {
           console.log('[TEST] ✅ RabbitMQ test successful:', msg);
 
           // Clean up test queue after successful test
-          setTimeout(async () => {
-            await rabbitMQService.cleanup(['test_queue']);
-            console.log('[TEST] 🧹 Test queue cleaned up');
-          }, 1000);
+          await rabbitMQService.cleanup(['test_queue']);
+          console.log('[TEST] 🧹 Test queue cleaned up');
+          await rabbitMQService.startConsumer(
+            'computing_queue',
+            consumerFactory
+          );
 
           return true;
         } else if (msg) {
