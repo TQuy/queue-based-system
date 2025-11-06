@@ -5,7 +5,7 @@ import {
   validateFibonacciSequenceInput,
 } from './validator';
 import { ZodError } from 'zod';
-import { getZodErrorResponse } from '@/utils/validation';
+import { getZodErrorResponse } from '@/utils/validation.utils';
 
 /**
  * @swagger

@@ -66,6 +66,9 @@ app.get("/api/example", (req: Request, res: Response) => {
 - We will try to split code into three layers: `Controller`, `Service` and finally `Utility`. The `Utility` layer hold the re-usable, pure functions such as function to calculate fibonacci number.
 - Don't update the path alias `@/*` to `../*` in files that are not test files
 
+## Testing
+- For service tests, we can product the expect value using the utility functions if possible to avoid hard-coding the expect value. This will make the test more robust to changes in the logic.In addition, create a variable for the input and re-use it in both the function call and the expected value.
+
 ## API Documentation with Swagger
 - **Swagger UI**: Available at `http://localhost:3000/api-docs` when server is running
 - **Auto-generation**: Use `npm run swagger:generate` to create swagger.json from code annotations
