@@ -1,5 +1,11 @@
 import type { Request, Response } from 'express';
 import { fibonacciService } from '@/services/computing/fibonacci.service';
+import {
+  validateFibonacciInput,
+  validateFibonacciSequenceInput,
+} from './validator';
+import { ZodError } from 'zod';
+import { getZodErrorResponse } from '@/utils/validation';
 
 /**
  * @swagger
@@ -38,41 +44,22 @@ import { fibonacciService } from '@/services/computing/fibonacci.service';
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 export const getFibonacci = (req: Request, res: Response): void => {
-  console.log('getFibonacci called');
   try {
-    const { n } = req.query;
-    if (!n || typeof n !== 'string') {
-      res.status(400).json({
-        error: 'Missing or invalid query parameter n',
-      });
-      return;
-    }
-    const num = parseInt(n, 10);
-
-    if (isNaN(num) || num < 0) {
-      res.status(400).json({
-        error: 'Invalid input. Please provide a non-negative integer.',
-      });
-      return;
-    }
-
-    if (num > 100) {
-      res.status(400).json({
-        error:
-          'Number too large. Please provide a number less than or equal to 100.',
-      });
-      return;
-    }
-
+    const num = validateFibonacciInput.parse(req.query['n']);
     const result = fibonacciService.calculate(num);
-
     res.json({
       input: num,
       fibonacci: result,
     });
   } catch (error) {
+    if (error instanceof ZodError) {
+      const errorRes = getZodErrorResponse(error);
+      res.status(400).json(errorRes);
+      return;
+    }
+    console.error(error);
     res.status(500).json({
-      error: 'Internal server error',
+      message: 'Internal server error',
     });
   }
 };
@@ -115,43 +102,21 @@ export const getFibonacci = (req: Request, res: Response): void => {
  */
 export const getFibonacciSequence = (req: Request, res: Response): void => {
   try {
-    const { count } = req.query;
-    if (!count || typeof count !== 'string') {
-      res.status(400).json({
-        error: 'Missing or invalid query parameter count',
-      });
-      return;
-    }
-    const num = parseInt(count, 10);
-
-    if (isNaN(num) || num < 1) {
-      res.status(400).json({
-        error: 'Invalid input. Please provide a positive integer.',
-      });
-      return;
-    }
-
-    if (num > 50) {
-      res.status(400).json({
-        error:
-          'Count too large. Please provide a count less than or equal to 50.',
-      });
-      return;
-    }
-
-    const sequence = fibonacciService.generateSequence(num);
+    const count = validateFibonacciSequenceInput.parse(req.query['count']);
+    const sequence = fibonacciService.generateSequence(count);
 
     res.json({
-      count: num,
+      count,
       sequence,
     });
   } catch (error) {
+    if (error instanceof ZodError) {
+      const errorRes = getZodErrorResponse(error);
+      res.status(400).json(errorRes);
+      return;
+    }
     res.status(500).json({
-      error: 'Internal server error',
+      message: 'Internal server error',
     });
   }
 };
-
-export const scheduleFibonacciTask = (req: Request, res: Response): void => {
-
-}

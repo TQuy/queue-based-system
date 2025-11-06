@@ -21,6 +21,22 @@ const swaggerOptions: swaggerJsdoc.Options = {
         url: 'http://localhost:3000',
         description: 'Development server',
       },
+      {
+        url: '{protocol}://{host}:{port}',
+        description: 'Configurable server',
+        variables: {
+          protocol: {
+            enum: ['http', 'https'],
+            default: 'http',
+          },
+          host: {
+            default: 'localhost',
+          },
+          port: {
+            default: '3000',
+          },
+        },
+      },
     ],
     components: {
       securitySchemes: {
@@ -69,7 +85,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
         ErrorResponse: {
           type: 'object',
           properties: {
-            error: {
+            message: {
               type: 'string',
               example: 'Invalid input. Please provide a non-negative integer.',
               description: 'Error message describing what went wrong',
@@ -119,6 +135,11 @@ export function setupSwagger(app: Application): void {
       filter: true,
       showExtensions: true,
       showCommonExtensions: true,
+      tryItOutEnabled: true,
+      requestInterceptor: (req: any) => {
+        req.headers['Content-Type'] = 'application/json';
+        return req;
+      },
     },
     customCss: `
       .swagger-ui .topbar { display: none }

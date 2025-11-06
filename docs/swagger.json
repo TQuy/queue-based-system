@@ -52,19 +52,9 @@
         }
       }
     },
-    "/computing/fibonacci/sequence/{count}": {
+    "/computing/fibonacci/sequence": {
       "get": {
         "description": "",
-        "parameters": [
-          {
-            "name": "count",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -94,19 +84,9 @@
         }
       }
     },
-    "/sequence/{count}": {
+    "/sequence": {
       "get": {
         "description": "",
-        "parameters": [
-          {
-            "name": "count",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -136,19 +116,9 @@
         }
       }
     },
-    "/fibonacci/sequence/{count}": {
+    "/fibonacci/sequence": {
       "get": {
         "description": "",
-        "parameters": [
-          {
-            "name": "count",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
