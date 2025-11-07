@@ -1,4 +1,4 @@
-import { isDev, isTest } from '@/utils/environment';
+import { isDev, isTest } from '@/utils/environment.utils';
 import { spawn } from 'child_process';
 
 class FibonacciConsumerService {

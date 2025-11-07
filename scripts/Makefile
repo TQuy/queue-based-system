@@ -1,6 +1,10 @@
 # Makefile: Preferred way to manage docker commands
 # Use 'make up', 'make stop', 'make build'
 
+# Load environment variables from config/.env file
+include ../config/.env
+export
+
 # Ensures that 'up', 'stop', etc. are treated as task names, not file names
 .PHONY: up stop down build logs
 
