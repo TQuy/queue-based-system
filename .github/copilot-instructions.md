@@ -65,6 +65,7 @@ app.get("/api/example", (req: Request, res: Response) => {
 - Use functional programming if possible, but can switch to hybrid approach between OOP and functional programming if closure is hard to comprehend, and having a explicit state is better.
 - We will try to split code into three layers: `Controller`, `Service` and finally `Utility`. The `Utility` layer hold the re-usable, pure functions such as function to calculate fibonacci number.
 - Don't update the path alias `@/*` to `../*` in files that are not test files
+- Avoid using magic string or number in the code. Create a constant variable with a meaningful name and use it instead.
 
 ## Testing
 - For service tests, we can product the expect value using the utility functions if possible to avoid hard-coding the expect value. This will make the test more robust to changes in the logic.In addition, create a variable for the input and re-use it in both the function call and the expected value.
