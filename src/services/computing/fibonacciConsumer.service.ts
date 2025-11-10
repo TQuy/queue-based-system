@@ -1,5 +1,5 @@
-import { isDev, isTest } from '@/utils/environment.utils';
 import { spawn } from 'child_process';
+import { isDev, isTest } from '@/utils/environment.utils';
 
 class FibonacciConsumerService {
   async consume({ n }: { n: number }): Promise<number> {
@@ -7,7 +7,7 @@ class FibonacciConsumerService {
       // Determine script path and execution method based on environment
       const isDevelopment = isTest() || isDev();
       const scriptPath = isDevelopment
-        ? './src/workers/computing/fibonacci.childProcess.ts'
+        ? './src/workers/computing/fibonacci.childProcess'
         : './dist/workers/computing/fibonacci.childProcess.js';
 
       // Use tsx for development (handles TS + path aliases), node for production

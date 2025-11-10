@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import fibonacciRouter from './fibonacci.routes';
+import fibonacciRouter from '@/routes/computing/fibonacci.routes';
 
 const router = Router();
 

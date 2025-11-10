@@ -1,4 +1,4 @@
-import { calculateFibonacciNumber } from '../fibonacci.utils';
+import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils';
 
 describe('calculateFibonacciNumber', () => {
   describe('valid inputs', () => {

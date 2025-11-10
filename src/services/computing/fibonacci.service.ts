@@ -1,5 +1,5 @@
 import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils';
-import { rabbitMQService } from '../queue/rabbitmq.service';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service';
 import { COMPUTING_QUEUE } from '@/constants/computing';
 
 export class FibonacciService {

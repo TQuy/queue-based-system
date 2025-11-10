@@ -6,8 +6,11 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals';
-import { FibonacciService, fibonacciService } from '../fibonacci.service';
-import { rabbitMQService } from '../../queue/rabbitmq.service';
+import {
+  FibonacciService,
+  fibonacciService,
+} from '@/services/computing/fibonacci.service';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service';
 import { COMPUTING_QUEUE } from '@/constants/computing';
 
 // Only mock external dependencies (RabbitMQ), not our own utilities

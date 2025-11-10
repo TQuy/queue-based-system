@@ -1,10 +1,10 @@
+import { ZodError } from 'zod';
 import type { Request, Response } from 'express';
 import { fibonacciService } from '@/services/computing/fibonacci.service';
 import {
   validateFibonacciInput,
   validateFibonacciSequenceInput,
-} from './validator';
-import { ZodError } from 'zod';
+} from '@/controllers/computing/validator';
 import { getZodErrorResponse } from '@/utils/validation.utils';
 
 /**

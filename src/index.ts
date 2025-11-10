@@ -1,8 +1,8 @@
-import { createApp } from '@/app';
 import dotenv from 'dotenv';
-import { rabbitMQService } from '@/services/queue/rabbitmq.service';
 import path from 'path';
-import { consumerFactory } from './services/queue/consumer.service';
+import { createApp } from '@/app';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service';
+import { consumerFactory } from '@/services/queue/consumer.service';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
