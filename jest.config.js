@@ -1,5 +1,11 @@
+import { createRequire } from 'module'
+import { pathsToModuleNameMapper } from 'ts-jest'
+
+const require = createRequire(import.meta.url)
+const tsconfig = require('./tsconfig.json')
+
 /** @type {import('jest').Config} */
-const config = {
+export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
@@ -12,20 +18,15 @@ const config = {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
       tsconfig: {
-        module: 'esnext',
-        moduleResolution: 'bundler',
-        allowImportingTsExtensions: true,
-        noEmit: true
+        verbatimModuleSyntax: false
       }
     }]
   },
   moduleNameMapper: {
-    '^@/types/(.*)$': '<rootDir>/src/types/$1',
-    '^@/utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@/services/(.*)$': '<rootDir>/src/services/$1',
-    '^@/controllers/(.*)$': '<rootDir>/src/controllers/$1',
-    '^@/routes/(.*)$': '<rootDir>/src/routes/$1',
-    '^@/(.*)$': '<rootDir>/src/$1'
+    // Automatically map all path aliases from tsconfig.json
+    ...pathsToModuleNameMapper(tsconfig.compilerOptions.paths || {}, {
+      prefix: '<rootDir>/'
+    })
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -36,5 +37,3 @@ const config = {
   coverageReporters: ['text', 'lcov', 'html'],
   verbose: true
 }
-
-export default config

@@ -108,7 +108,13 @@ const swaggerOptions: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ['./src/routes/*', './src/controllers/**/*'], // Path to files with OpenAPI annotations
+  apis: [
+    './src/routes/**/*.ts',
+    './src/controllers/**/*.ts',
+    '!./src/**/__tests__/**',
+    '!./src/**/*.test.ts',
+    '!./src/**/*.spec.ts',
+  ], // Path to files with OpenAPI annotations, excluding test files
 };
 
 // Generate swagger specification

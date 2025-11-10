@@ -1,59 +1,35 @@
 {
   "compilerOptions": {
-    // Module & Target
-    "module": "ESNext",
     "target": "ES2022",
+    "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    // Output
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": true,
-    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
     "declaration": true,
     "declarationMap": true,
-    // Strict Type Checking (Maximum Safety)
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "removeComments": false,
+    "noEmitOnError": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitReturns": true,
-    "noImplicitOverride": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "allowUnreachableCode": false,
+    "noUncheckedSideEffectImports": true,
     "allowUnusedLabels": false,
-    // Module Resolution & Interop
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
+    "allowUnreachableCode": false,
     "skipLibCheck": true,
-    // Path Mapping
+    "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/types/*": [
-        "./src/types/*"
-      ],
-      "@/utils/*": [
-        "./src/utils/*"
-      ],
-      "@/services/*": [
-        "./src/services/*"
-      ],
-      "@/controllers/*": [
-        "./src/controllers/*"
-      ],
-      "@/routes/*": [
-        "./src/routes/*"
-      ],
-      "@/workers/*": [
-        "./src/workers/*"
-      ],
       "@/*": [
         "./src/*"
-      ],
+      ]
     }
   },
   "include": [
@@ -61,6 +37,10 @@
   ],
   "exclude": [
     "node_modules",
-    "dist",
-  ]
+    "dist"
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
 }
