@@ -13,6 +13,7 @@ router.get('/', getFibonacci);
 // GET /fibonacci/sequence?count=5 - Get fibonacci sequence
 router.get('/sequence', getFibonacciSequence);
 
-router.get('/schedule', scheduleFibonacciCalculation);
+// POST /fibonacci/schedule - Schedule asynchronous fibonacci calculation
+router.post('/schedule', scheduleFibonacciCalculation);
 
 export default router;

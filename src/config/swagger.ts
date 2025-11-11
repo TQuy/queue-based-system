@@ -85,14 +85,79 @@ const swaggerOptions: swaggerJsdoc.Options = {
         ScheduleResponse: {
           type: 'object',
           properties: {
+            taskId: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440000',
+              description: 'Unique identifier for tracking the scheduled task',
+            },
             message: {
               type: 'string',
-              example:
-                'Fibonacci calculation for position 10 has been scheduled.',
+              example: 'Fibonacci calculation has been scheduled.',
               description: 'Confirmation message for scheduled calculation',
             },
           },
-          required: ['message'],
+          required: ['taskId', 'message'],
+        },
+        TaskStatus: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid',
+              example: '550e8400-e29b-41d4-a716-446655440000',
+              description: 'Unique task identifier',
+            },
+            type: {
+              type: 'string',
+              example: 'fibonacci.calculate',
+              description: 'Type of task being performed',
+            },
+            input: {
+              type: 'object',
+              description: 'Input parameters for the task',
+              example: { n: 10 },
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'queued', 'processing', 'completed', 'failed'],
+              example: 'completed',
+              description: 'Current status of the task',
+            },
+            result: {
+              type: 'object',
+              description:
+                'Task result (only present when status is completed)',
+              example: { fibonacci: 55 },
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:00.000Z',
+              description: 'When the task was created',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:05.000Z',
+              description: 'When the task was last updated',
+            },
+            completedAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:05.000Z',
+              description:
+                'When the task was completed (only present when status is completed)',
+            },
+            failedAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:05.000Z',
+              description:
+                'When the task failed (only present when status is failed)',
+            },
+          },
+          required: ['id', 'type', 'input', 'status', 'createdAt', 'updatedAt'],
         },
         ErrorResponse: {
           type: 'object',
