@@ -110,10 +110,9 @@ class RabbitMQService {
       persistent?: boolean;
       durable?: boolean;
     }
-  ): Promise<boolean> {
+  ) {
     if (!this.publishChannel) {
-      console.error('[AMQP] No publish channel found. Is service connected?');
-      return false;
+      throw new Error('[AMQP] No publish channel found. Is service connected?');
     }
 
     try {
@@ -129,11 +128,11 @@ class RabbitMQService {
       });
 
       console.log(`[AMQP] Message sent to queue '${queue}'`);
-      return true;
     } catch (err) {
-      console.error(`[AMQP] Failed to send message to queue '${queue}'`, err);
       // Handle error, maybe re-create channel
-      return false;
+      throw new Error(`[AMQP] Failed to send message to queue '${queue}'`, {
+        cause: err,
+      });
     }
   }
 

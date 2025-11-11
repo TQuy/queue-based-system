@@ -17,6 +17,30 @@ services:
       - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}"
       - "RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}"
 
-# This defines the named volume we used above
+  # Redis service for caching and data storage
+  redis:
+    image: "redis:7.2-alpine"
+    container_name: "local_redis"
+    ports:
+      # [HOST_PORT]:[CONTAINER_PORT]
+      - "6379:6379"   # Default Redis port
+    volumes:
+      # This saves your Redis data even if you stop/remove the container
+      - "redis_data:/data"
+    environment:
+      # Redis configuration
+      - "REDIS_PASSWORD=${REDIS_PASSWORD}"
+    command: >
+      sh -c "
+        if [ -n \"$$REDIS_PASSWORD\" ]; then
+          redis-server --requirepass $$REDIS_PASSWORD --appendonly yes
+        else
+          redis-server --appendonly yes
+        fi
+      "
+    restart: unless-stopped
+
+# This defines the named volumes we used above
 volumes:
   rabbitmq_data:
+  redis_data:

@@ -1,6 +1,9 @@
 import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service';
 import { COMPUTING_QUEUE } from '@/constants/computing';
+import { redisService } from '@/services/datastore/redis.service';
+import { v4 as uuidv4 } from 'uuid';
+import { TaskData } from '../datastore/types';
 
 export class FibonacciService {
   /**
@@ -37,11 +40,52 @@ export class FibonacciService {
     return FibonacciService.getFibonacciSequence(n);
   }
 
-  scheduleFibonacciCalculation(n: number): Promise<boolean> {
-    return rabbitMQService.sendMessage(COMPUTING_QUEUE, {
-      topic: 'fibonacci.calculate',
-      data: { n },
-    });
+  async scheduleFibonacciCalculation(n: number): Promise<{ taskId: string }> {
+    // Generate unique task ID
+    const taskId = uuidv4();
+
+    // Create task metadata
+    const taskData: TaskData = {
+      id: taskId,
+      type: 'fibonacci.calculate',
+      input: { n },
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    let success = true;
+
+    try {
+      // Store task in Redis with expiration (24 hours)
+      await redisService.setTask(taskId, taskData, 86400);
+
+      // Send message to RabbitMQ with task ID
+      await rabbitMQService.sendMessage(COMPUTING_QUEUE, {
+        topic: 'fibonacci.calculate',
+        taskId,
+        data: { n },
+      });
+
+      return { taskId };
+    } catch (error) {
+      success = false;
+      console.error('Failed to schedule fibonacci calculation:', error);
+      // Try to update task status to 'failed' if task was created
+
+      throw new Error('Failed to schedule Fibonacci calculation', {
+        cause: error,
+      });
+    } finally {
+      const status = success ? 'queued' : 'failed';
+      try {
+        await redisService.updateTaskStatus(taskId, status);
+      } catch (updateError) {
+        console.error(
+          `Failed to update task status to ${status}:`,
+          updateError
+        );
+      }
+    }
   }
 }
 

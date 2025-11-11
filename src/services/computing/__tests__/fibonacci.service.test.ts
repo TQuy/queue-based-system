@@ -11,17 +11,22 @@ import {
   fibonacciService,
 } from '@/services/computing/fibonacci.service';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service';
+import { redisService } from '@/services/datastore/redis.service';
 import { COMPUTING_QUEUE } from '@/constants/computing';
 
-// Only mock external dependencies (RabbitMQ), not our own utilities
+// Mock external dependencies
 jest.mock('../../queue/rabbitmq.service');
+jest.mock('../../datastore/redis.service');
 
 const mockRabbitMQService = rabbitMQService as jest.Mocked<
   typeof rabbitMQService
 >;
+const mockRedisService = redisService as jest.Mocked<typeof redisService>;
 
-// Ensure sendMessage is properly mocked
+// Ensure services are properly mocked
 mockRabbitMQService.sendMessage = jest.fn();
+mockRedisService.setTask = jest.fn();
+mockRedisService.updateTaskStatus = jest.fn();
 
 describe('FibonacciService', () => {
   beforeEach(() => {
@@ -164,34 +169,58 @@ describe('FibonacciService', () => {
     });
 
     describe('scheduleFibonacciCalculation', () => {
-      it('should send message to RabbitMQ service successfully', async () => {
-        mockRabbitMQService.sendMessage.mockResolvedValue(true);
+      beforeEach(() => {
+        // Mock Redis operations to return successful results by default
+        mockRedisService.setTask.mockResolvedValue(true);
+        mockRedisService.updateTaskStatus.mockResolvedValue(true);
+        mockRabbitMQService.sendMessage.mockResolvedValue(undefined);
+      });
 
+      it('should send message to RabbitMQ service successfully', async () => {
         const result = await fibonacciService.scheduleFibonacciCalculation(10);
+
+        expect(mockRedisService.setTask).toHaveBeenCalledWith(
+          result.taskId,
+          expect.objectContaining({
+            id: result.taskId,
+            type: 'fibonacci.calculate',
+            input: { n: 10 },
+            status: 'pending',
+          }),
+          86400
+        );
 
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
-          {
+          expect.objectContaining({
             topic: 'fibonacci.calculate',
+            taskId: result.taskId,
             data: { n: 10 },
-          }
+          })
         );
-        expect(result).toBe(true);
+
+        expect(mockRedisService.updateTaskStatus).toHaveBeenCalledWith(
+          result.taskId,
+          'queued'
+        );
+
+        expect(result.taskId).toBeDefined();
       });
 
       it('should handle RabbitMQ service failure', async () => {
-        mockRabbitMQService.sendMessage.mockResolvedValue(false);
+        const error = new Error('RabbitMQ send failed');
+        mockRabbitMQService.sendMessage.mockRejectedValue(error);
 
-        const result = await fibonacciService.scheduleFibonacciCalculation(5);
+        await expect(
+          fibonacciService.scheduleFibonacciCalculation(5)
+        ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
-        expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
-          COMPUTING_QUEUE,
-          {
-            topic: 'fibonacci.calculate',
-            data: { n: 5 },
-          }
+        expect(mockRedisService.setTask).toHaveBeenCalled();
+        expect(mockRabbitMQService.sendMessage).toHaveBeenCalled();
+        expect(mockRedisService.updateTaskStatus).toHaveBeenCalledWith(
+          expect.any(String),
+          'failed'
         );
-        expect(result).toBe(false);
       });
 
       it('should handle RabbitMQ service rejection', async () => {
@@ -200,30 +229,25 @@ describe('FibonacciService', () => {
 
         await expect(
           fibonacciService.scheduleFibonacciCalculation(7)
-        ).rejects.toThrow('RabbitMQ connection failed');
+        ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
-        expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
-          COMPUTING_QUEUE,
-          {
-            topic: 'fibonacci.calculate',
-            data: { n: 7 },
-          }
-        );
+        expect(mockRedisService.setTask).toHaveBeenCalled();
+        expect(mockRabbitMQService.sendMessage).toHaveBeenCalled();
       });
 
       it('should handle edge case with zero input', async () => {
-        mockRabbitMQService.sendMessage.mockResolvedValue(true);
-
         const result = await fibonacciService.scheduleFibonacciCalculation(0);
 
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
-          {
+          expect.objectContaining({
             topic: 'fibonacci.calculate',
+            taskId: result.taskId,
             data: { n: 0 },
-          }
+          })
         );
-        expect(result).toBe(true);
+
+        expect(result.taskId).toBeDefined();
       });
     });
   });

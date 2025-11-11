@@ -163,16 +163,11 @@ export const scheduleFibonacciCalculation = async (
 ): Promise<void> => {
   try {
     const n = validateFibonacciInput.parse(req.query['n']);
-    const scheduled = await fibonacciService.scheduleFibonacciCalculation(n);
-    if (scheduled) {
-      res.json({
-        message: `Fibonacci calculation for position ${n} has been scheduled.`,
-      });
-    } else {
-      res.status(500).json({
-        message: 'Failed to schedule Fibonacci calculation.',
-      });
-    }
+    const { taskId } = await fibonacciService.scheduleFibonacciCalculation(n);
+    res.json({
+      taskId: taskId,
+      message: 'Fibonacci calculation has been scheduled.',
+    });
   } catch (error) {
     if (error instanceof ZodError) {
       const errorRes = getZodErrorResponse(error);
@@ -180,7 +175,7 @@ export const scheduleFibonacciCalculation = async (
       return;
     }
     res.status(500).json({
-      message: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Internal server error',
     });
   }
 };
