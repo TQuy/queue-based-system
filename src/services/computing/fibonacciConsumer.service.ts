@@ -1,8 +1,9 @@
 import { spawn } from 'child_process';
 import { isDev, isTest } from '@/utils/environment.utils';
+import { redisService } from '../datastore/redis.service';
 
 class FibonacciConsumerService {
-  async consume({ n }: { n: number }): Promise<number> {
+  async consume(taskId: string, { n }: { n: number }): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       // Determine script path and execution method based on environment
       const isDevelopment = isTest() || isDev();
@@ -24,7 +25,9 @@ class FibonacciConsumerService {
 
       // Collect stdout data
       childProcess.stdout.on('data', (data: Buffer) => {
+        console.log('taskID', taskId);
         result += data.toString();
+        redisService.updateTaskStatus(taskId, 'completed');
       });
 
       // Collect stderr data

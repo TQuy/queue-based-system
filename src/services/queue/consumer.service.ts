@@ -1,13 +1,20 @@
 import { fibonacciConsumerService } from '@/services/computing/fibonacciConsumer.service';
 
-export const consumerFactory = async (msg: { topic: string; data: any }) => {
+export const consumerFactory = async (msg: {
+  topic: string;
+  data: any;
+  taskId: string;
+}) => {
   console.log('Received message with topic:', msg.topic);
   const parts = msg.topic.split('.');
   if (!parts.length) throw new Error('Empty topic');
   switch (parts[0]) {
     case 'fibonacci': {
       if (parts[1] === 'calculate') {
-        const result = await fibonacciConsumerService.consume(msg.data);
+        const result = await fibonacciConsumerService.consume(
+          msg.taskId,
+          msg.data
+        );
         console.log(`Fibonacci calculation result: ${result}`);
         return true;
       }

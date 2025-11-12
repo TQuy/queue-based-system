@@ -3,46 +3,33 @@ import { isDev, isTest } from '@/utils/environment.utils';
 import { TaskData } from './types';
 
 export class RedisService {
-  private client: RedisClientType;
+  private client: RedisClientType | null = null;
   private isConnected = false;
 
-  constructor() {
-    // Redis configuration
-    const redisConfig = {
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-      socket: {
-        reconnectStrategy: (retries: number) => Math.min(retries * 50, 1000),
-      },
-    };
-
-    this.client = createClient(redisConfig);
-
-    // Set up event listeners
-    this.setupEventListeners();
-  }
+  constructor() {}
 
   private setupEventListeners(): void {
-    this.client.on('connect', () => {
-      console.log('📦 Redis: Connecting...');
+    this.client!.on('connect', () => {
+      console.log('[Redis] Connecting...');
     });
 
-    this.client.on('ready', () => {
-      console.log('✅ Redis: Connected and ready');
+    this.client!.on('ready', () => {
+      console.log('[Redis] Connected and ready');
       this.isConnected = true;
     });
 
-    this.client.on('error', err => {
-      console.error('❌ Redis: Connection error:', err);
+    this.client!.on('error', err => {
+      console.error('[Redis] Connection error:', err);
       this.isConnected = false;
     });
 
-    this.client.on('end', () => {
-      console.log('📦 Redis: Connection ended');
+    this.client!.on('end', () => {
+      console.log('[Redis] Connection ended');
       this.isConnected = false;
     });
 
-    this.client.on('reconnecting', () => {
-      console.log('🔄 Redis: Reconnecting...');
+    this.client!.on('reconnecting', () => {
+      console.log('🔄 [Redis] Reconnecting...');
     });
   }
 
@@ -50,26 +37,28 @@ export class RedisService {
    * Connect to Redis
    */
   async connect(): Promise<void> {
-    if (!this.isConnected && !this.client.isReady) {
+    if (!this.client) {
       try {
-        await this.client.connect();
-      } catch (error) {
-        console.error('Failed to connect to Redis:', error);
-        throw error;
-      }
-    }
-  }
+        // Redis configuration
+        const redisUrl =
+          `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}` ||
+          'redis://localhost:6379';
+        console.log(`[Redis] redisUrl: ${redisUrl}`);
+        const redisConfig = {
+          url: redisUrl,
+          socket: {
+            reconnectStrategy: (retries: number) =>
+              Math.min(retries * 50, 1000),
+          },
+        };
 
-  /**
-   * Disconnect from Redis
-   */
-  async disconnect(): Promise<void> {
-    if (this.isConnected || this.client.isReady) {
-      try {
-        await this.client.disconnect();
-        this.isConnected = false;
+        this.client = createClient(redisConfig);
+
+        // Set up event listeners
+        this.setupEventListeners();
+        await this.client!.connect();
       } catch (error) {
-        console.error('Failed to disconnect from Redis:', error);
+        console.error('[Redis] Failed to connect to Redis:', error);
         throw error;
       }
     }
@@ -79,7 +68,31 @@ export class RedisService {
    * Check if Redis is connected
    */
   isReady(): boolean {
-    return this.isConnected && this.client.isReady;
+    return this.isConnected && this.client!.isReady;
+  }
+
+  /**
+   * Ensure Redis connection is established
+   */
+  private async ensureConnection(): Promise<void> {
+    if (!this.isReady()) {
+      await this.connect();
+    }
+  }
+
+  /**
+   * Disconnect from Redis
+   */
+  async disconnect(): Promise<void> {
+    if (this.isConnected || this.client!.isReady) {
+      try {
+        await this.client!.destroy();
+        this.isConnected = false;
+      } catch (error) {
+        console.error('[Redis] Failed to disconnect from Redis:', error);
+        throw error;
+      }
+    }
   }
 
   /**
@@ -97,20 +110,20 @@ export class RedisService {
       const value = JSON.stringify(taskData);
 
       if (ttlSeconds) {
-        await this.client.setEx(key, ttlSeconds, value);
+        await this.client!.setEx(key, ttlSeconds, value);
       } else {
-        await this.client.set(key, value);
+        await this.client!.set(key, value);
       }
 
       if (isDev()) {
         console.log(
-          `📝 Redis: Task ${taskId} stored with status: ${taskData.status}`
+          `📝 [Redis] Task ${taskId} stored with status: ${taskData.status}`
         );
       }
 
       return true;
     } catch (error) {
-      console.error('Failed to set task in Redis:', error);
+      console.error('[Redis] Failed to set task in Redis:', error);
       return false;
     }
   }
@@ -123,7 +136,7 @@ export class RedisService {
       await this.ensureConnection();
 
       const key = this.getTaskKey(taskId);
-      const value = await this.client.get(key);
+      const value = await this.client!.get(key);
 
       if (!value) {
         return null;
@@ -131,7 +144,7 @@ export class RedisService {
 
       return JSON.parse(value) as TaskData;
     } catch (error) {
-      console.error('Failed to get task from Redis:', error);
+      console.error('[Redis] Failed to get task from Redis:', error);
       return null;
     }
   }
@@ -149,7 +162,7 @@ export class RedisService {
       // Get existing task data
       const existingTask = await this.getTask(taskId);
       if (!existingTask) {
-        console.warn(`Task ${taskId} not found for update`);
+        console.warn(`[Redis] Task ${taskId} not found for update`);
         return false;
       }
 
@@ -163,17 +176,17 @@ export class RedisService {
       const key = this.getTaskKey(taskId);
       const value = JSON.stringify(updatedTask);
 
-      await this.client.set(key, value);
+      await this.client!.set(key, value);
 
       if (isDev()) {
         console.log(
-          `📝 Redis: Task ${taskId} updated with status: ${updatedTask.status}`
+          `📝 [Redis] Task ${taskId} updated with status: ${updatedTask.status}`
         );
       }
 
       return true;
     } catch (error) {
-      console.error('Failed to update task in Redis:', error);
+      console.error('[Redis] Failed to update task in Redis:', error);
       return false;
     }
   }
@@ -204,11 +217,11 @@ export class RedisService {
       await this.ensureConnection();
 
       const key = this.getTaskKey(taskId);
-      const deleted = await this.client.del(key);
+      const deleted = await this.client!.del(key);
 
       return deleted > 0;
     } catch (error) {
-      console.error('Failed to delete task from Redis:', error);
+      console.error('[Redis] Failed to delete task from Redis:', error);
       return false;
     }
   }
@@ -221,7 +234,7 @@ export class RedisService {
       await this.ensureConnection();
 
       const pattern = this.getTaskKey('*');
-      const keys = await this.client.keys(pattern);
+      const keys = await this.client!.keys(pattern);
 
       if (!status) {
         // Return all task IDs
@@ -231,7 +244,7 @@ export class RedisService {
       // Filter by status
       const taskIds: string[] = [];
       for (const key of keys) {
-        const value = await this.client.get(key);
+        const value = await this.client!.get(key);
         if (value) {
           const task = JSON.parse(value) as TaskData;
           if (task.status === status) {
@@ -242,7 +255,7 @@ export class RedisService {
 
       return taskIds;
     } catch (error) {
-      console.error('Failed to get tasks by status from Redis:', error);
+      console.error('[Redis] Failed to get tasks by status from Redis:', error);
       return [];
     }
   }
@@ -255,11 +268,11 @@ export class RedisService {
       await this.ensureConnection();
 
       const key = this.getTaskKey(taskId);
-      const result = await this.client.expire(key, ttlSeconds);
+      const result = await this.client!.expire(key, ttlSeconds);
 
       return result === 1;
     } catch (error) {
-      console.error('Failed to set TTL for task in Redis:', error);
+      console.error('[Redis] Failed to set TTL for task in Redis:', error);
       return false;
     }
   }
@@ -272,19 +285,10 @@ export class RedisService {
       await this.ensureConnection();
 
       const key = this.getTaskKey(taskId);
-      return await this.client.ttl(key);
+      return await this.client!.ttl(key);
     } catch (error) {
-      console.error('Failed to get TTL for task from Redis:', error);
+      console.error('[Redis] Failed to get TTL for task from Redis:', error);
       return -1;
-    }
-  }
-
-  /**
-   * Ensure Redis connection is established
-   */
-  private async ensureConnection(): Promise<void> {
-    if (!this.isReady()) {
-      await this.connect();
     }
   }
 
@@ -316,14 +320,14 @@ export class RedisService {
       await this.ensureConnection();
 
       // Test with ping
-      const pong = await this.client.ping();
+      const pong = await this.client!.ping();
 
       return {
         status: 'healthy',
         connected: true,
         info: {
           ping: pong,
-          ready: this.client.isReady,
+          ready: this.client!.isReady,
         },
       };
     } catch (error) {
@@ -344,7 +348,7 @@ export const redisService = new RedisService();
 // Auto-connect in non-test environments
 if (!isTest()) {
   redisService.connect().catch(err => {
-    console.error('Failed to auto-connect to Redis:', err);
+    console.error('[Redis] Failed to auto-connect to Redis:', err);
   });
 }
 

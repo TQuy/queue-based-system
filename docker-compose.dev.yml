@@ -22,13 +22,11 @@ services:
     image: "redis:7.2-alpine"
     container_name: "local_redis"
     ports:
-      # [HOST_PORT]:[CONTAINER_PORT]
-      - "6379:6379"   # Default Redis port
+      - "${REDIS_PORT}:6379"
     volumes:
       # This saves your Redis data even if you stop/remove the container
       - "redis_data:/data"
     environment:
-      # Redis configuration
       - "REDIS_PASSWORD=${REDIS_PASSWORD}"
     command: >
       sh -c "
