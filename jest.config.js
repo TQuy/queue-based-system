@@ -6,6 +6,7 @@ const tsconfig = require('./tsconfig.json')
 
 /** @type {import('jest').Config} */
 export default {
+  // Use the ESM ts-jest preset so Jest can run ESM-style imports from TS.
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
@@ -22,11 +23,11 @@ export default {
       }
     }]
   },
+  // Explicit alias mapping for ESM: map `@/x.js` -> source `.ts` so ts-jest can
+  // transform imports that include `.js` extension, and keep `@/x` mapping too.
   moduleNameMapper: {
-    // Automatically map all path aliases from tsconfig.json
-    ...pathsToModuleNameMapper(tsconfig.compilerOptions.paths || {}, {
-      prefix: '<rootDir>/'
-    })
+    '^@\/(.*)\\.js$': '<rootDir>/src/$1.ts',
+    '^@\/(.*)$': '<rootDir>/src/$1'
   },
   collectCoverageFrom: [
     'src/**/*.ts',
