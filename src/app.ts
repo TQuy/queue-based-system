@@ -1,4 +1,5 @@
 import express from 'express';
+import morgan from 'morgan';
 import type { Request, Response, Application, NextFunction } from 'express';
 import { setupSwagger } from '@/config/swagger.js';
 import apiRoutes from '@/routes/api.routes.js';
@@ -12,7 +13,7 @@ import apiRoutes from '@/routes/api.routes.js';
  */
 export const createApp = (): Application => {
   const app: Application = express();
-
+  app.use(morgan('dev'));
   // --- 1. Core Middleware ---
   // Enable JSON body parsing
   app.use(express.json());

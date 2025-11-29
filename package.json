@@ -23,9 +23,11 @@
     "validate": "npm run type-check && npm run lint:check && npm run format:check && npm run test"
   },
   "dependencies": {
+    "@types/morgan": "^1.9.10",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
     "express": "^5.0.1",
+    "morgan": "^1.10.1",
     "redis": "^5.9.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
