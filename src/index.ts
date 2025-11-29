@@ -23,7 +23,7 @@ const startServer = async () => {
 
   // Test RabbitMQ connection (only in development)
   if (process.env['NODE_ENV'] !== 'production') {
-    console.log('[TEST] Running RabbitMQ connectivity test...');
+    console.log('[TEST][AMQP] Running RabbitMQ connectivity test...');
     const messageContent = { text: 'Hello, RabbitMQ!' };
 
     await rabbitMQService.sendMessage('test_queue', messageContent);
@@ -32,11 +32,11 @@ const startServer = async () => {
       'test_queue',
       async (msg: any): Promise<boolean> => {
         if (msg && JSON.stringify(msg) === JSON.stringify(messageContent)) {
-          console.log('[TEST] RabbitMQ test successful:', msg);
+          console.log('[TEST][AMQP] RabbitMQ test successful:', msg);
 
           // Clean up test queue after successful test
           await rabbitMQService.cleanup(['test_queue']);
-          console.log('[TEST] 🧹 Test queue cleaned up');
+          console.log('[TEST][AMQP] 🧹 Test queue cleaned up');
           await rabbitMQService.startConsumer(
             'computing_queue',
             consumerFactory
@@ -44,9 +44,9 @@ const startServer = async () => {
 
           return true;
         } else if (msg) {
-          console.log('[TEST] ⚠️ Unexpected message:', msg);
+          console.log('[TEST][AMQP] ⚠️ Unexpected message:', msg);
         } else {
-          console.log('[TEST] No message received');
+          console.log('[TEST][AMQP] No message received');
         }
         return false;
       }
