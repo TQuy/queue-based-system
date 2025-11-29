@@ -69,9 +69,6 @@ export class FibonacciService {
       return { taskId };
     } catch (error) {
       success = false;
-      console.error('Failed to schedule fibonacci calculation:', error);
-      // Try to update task status to 'failed' if task was created
-
       throw new Error('Failed to schedule Fibonacci calculation', {
         cause: error,
       });
@@ -81,8 +78,7 @@ export class FibonacciService {
         await redisService.updateTaskStatus(taskId, status);
       } catch (updateError) {
         console.error(
-          `Failed to update task status to ${status}:`,
-          updateError
+          new Error(`Failed to update task status to ${status}:`, { cause: updateError })
         );
       }
     }
