@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
-import { isDev, isTest } from '@/utils/environment.utils';
-import { redisService } from '../datastore/redis.service';
+import { isDev, isTest } from '@/utils/environment.utils.js';
+import { redisService } from '../datastore/redis.service.js';
 
 class FibonacciConsumerService {
   async consume(taskId: string, { n }: { n: number }): Promise<number> {

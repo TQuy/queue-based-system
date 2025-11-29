@@ -1,6 +1,6 @@
 import request from 'supertest'; // A popular library for testing HTTP
 import { describe, it, expect } from '@jest/globals';
-import { createApp } from '@/app';
+import { createApp } from '@/app.js';
 
 // Create the app instance *once* for all tests in this suite
 const app = createApp();

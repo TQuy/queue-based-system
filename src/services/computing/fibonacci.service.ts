@@ -1,9 +1,13 @@
-import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils';
-import { rabbitMQService } from '@/services/queue/rabbitmq.service';
-import { COMPUTING_QUEUE } from '@/constants/computing';
-import { redisService } from '@/services/datastore/redis.service';
+
+import { Worker } from 'worker_threads';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskData } from '../datastore/types';
+import path from 'path';
+import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils.js';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
+import { COMPUTING_QUEUE } from '@/constants/computing.js';
+import { redisService } from '@/services/datastore/redis.service.js';
+import { TaskData } from '../datastore/types.js';
+import { isDev, isTest } from '@/utils/environment.utils.js';
 
 export class FibonacciService {
   /**
@@ -83,7 +87,53 @@ export class FibonacciService {
       }
     }
   }
+
+  async calculateAsync(n: number): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      // In dev/test: use tsx to run TS files with path aliases
+      // In prod: use compiled JS (no runtime TS/path-alias overhead)
+      const isDevTest = isTest() || isDev();
+      const rootDir = process.cwd();
+
+      let workerPath: string = isDevTest ?
+        path.join(rootDir, 'dist', 'workers', 'computing', 'fibonacci.workerThread.js') :
+        path.join(rootDir, 'workers', 'computing', 'fibonacci.workerThread.js');
+      let execArgs: string[] = [];
+
+      // 🚀 Worker Initialization
+      const worker = new Worker(workerPath, {
+        execArgv: execArgs,
+      });
+
+      worker.postMessage({ n });
+
+      worker.on('message', (response: {
+        success: boolean;
+        result?: number;
+        error?: string;
+      }) => {
+        if (response.success && response.result !== undefined) {
+          resolve(response.result);
+        } else {
+          reject(new Error(response.error || 'Worker computation failed'));
+        }
+        void worker.terminate();
+      });
+
+      worker.on('error', (err) => {
+        reject(err);
+        void worker.terminate();
+      });
+
+      worker.on('exit', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Worker stopped with exit code ${code}`));
+        }
+      });
+    });
+  }
 }
+
 
 // Export both class and instance
 export const fibonacciService = new FibonacciService();

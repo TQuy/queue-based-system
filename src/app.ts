@@ -1,7 +1,7 @@
 import express from 'express';
 import type { Request, Response, Application, NextFunction } from 'express';
-import { setupSwagger } from '@/config/swagger';
-import apiRoutes from '@/routes/api.routes';
+import { setupSwagger } from '@/config/swagger.js';
+import apiRoutes from '@/routes/api.routes.js';
 
 /**
  * Creates and configures an Express application.

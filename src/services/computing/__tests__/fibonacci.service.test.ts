@@ -9,10 +9,10 @@ import {
 import {
   FibonacciService,
   fibonacciService,
-} from '@/services/computing/fibonacci.service';
-import { rabbitMQService } from '@/services/queue/rabbitmq.service';
-import { redisService } from '@/services/datastore/redis.service';
-import { COMPUTING_QUEUE } from '@/constants/computing';
+} from '@/services/computing/fibonacci.service.js';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
+import { redisService } from '@/services/datastore/redis.service.js';
+import { COMPUTING_QUEUE } from '@/constants/computing.js';
 
 // Mock external dependencies
 jest.mock('../../queue/rabbitmq.service');

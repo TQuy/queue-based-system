@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from '@jest/globals';
-import { createApp } from '@/app';
+import { createApp } from '@/app.js';
 
 describe('Fibonacci Routes E2E Tests', () => {
   let app: any;

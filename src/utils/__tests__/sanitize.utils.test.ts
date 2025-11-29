@@ -1,4 +1,4 @@
-import { hideSensitiveDataJSON } from '@/utils/sanitize.utils';
+import { hideSensitiveDataJSON } from '@/utils/sanitize.utils.js';
 
 describe('sanitize.utils', () => {
   describe('hideSensitiveDataJSON', () => {

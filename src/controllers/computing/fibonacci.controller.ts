@@ -1,11 +1,11 @@
 import { ZodError } from 'zod';
 import type { Request, Response } from 'express';
-import { fibonacciService } from '@/services/computing/fibonacci.service';
+import { fibonacciService } from '@/services/computing/fibonacci.service.js';
 import {
   validateFibonacciInput,
   validateFibonacciSequenceInput,
-} from '@/controllers/computing/validator';
-import { getZodErrorResponse } from '@/utils/validation.utils';
+} from '@/controllers/computing/validator.js';
+import { getZodErrorResponse } from '@/utils/validation.utils.js';
 
 /**
  * @swagger
@@ -47,6 +47,27 @@ export const getFibonacci = (req: Request, res: Response): void => {
   try {
     const num = validateFibonacciInput.parse(req.query['n']);
     const result = fibonacciService.calculate(num);
+    res.json({
+      input: num,
+      fibonacci: result,
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errorRes = getZodErrorResponse(error);
+      res.status(400).json(errorRes);
+      return;
+    }
+    console.error(error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
+};
+
+export const getFibonacciAsync = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const num = validateFibonacciInput.parse(req.query['n']);
+    const result = await fibonacciService.calculateAsync(num);
     res.json({
       input: num,
       fibonacci: result,

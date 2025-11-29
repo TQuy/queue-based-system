@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from 'redis';
-import { isDev, isTest } from '@/utils/environment.utils';
-import { TaskData } from './types';
+import { isDev, isTest } from '@/utils/environment.utils.js';
+import { TaskData } from './types.js';
 
 export class RedisService {
   private client: RedisClientType | null = null;

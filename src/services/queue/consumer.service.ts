@@ -1,4 +1,4 @@
-import { fibonacciConsumerService } from '@/services/computing/fibonacciConsumer.service';
+import { fibonacciConsumerService } from '@/services/computing/fibonacciConsumer.service.js';
 
 export const consumerFactory = async (msg: {
   topic: string;

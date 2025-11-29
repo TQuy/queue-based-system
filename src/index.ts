@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { createApp } from '@/app';
-import { rabbitMQService } from '@/services/queue/rabbitmq.service';
-import { consumerFactory } from '@/services/queue/consumer.service';
-import { redisService } from './services/datastore/redis.service';
+import { createApp } from '@/app.js';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
+import { consumerFactory } from '@/services/queue/consumer.service.js';
+import { redisService } from './services/datastore/redis.service.js';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();

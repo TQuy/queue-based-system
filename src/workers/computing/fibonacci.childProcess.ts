@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { z } from 'zod';
-import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils';
+import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils.js';
 
 const inputValidator = z.coerce
   .number()
