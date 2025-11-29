@@ -344,12 +344,4 @@ export class RedisService {
 
 // Export singleton instance
 export const redisService = new RedisService();
-
-// Auto-connect in non-test environments
-if (!isTest()) {
-  redisService.connect().catch(err => {
-    console.error('[Redis] Failed to auto-connect to Redis:', err);
-  });
-}
-
 export default RedisService;
