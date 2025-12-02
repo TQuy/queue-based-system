@@ -1,9 +1,11 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { createApp } from '@/app.js';
+import type { Server as SocketIOServer } from 'socket.io';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { consumerFactory } from '@/services/queue/consumer.service.js';
 import { redisService } from './services/datastore/redis.service.js';
+import { setupSocketServer } from './websocket.js';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
@@ -17,8 +19,14 @@ const startServer = async () => {
   await rabbitMQService.connect();
   await redisService.connect();
 
-  app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+  // Setup Socket.IO with the Express app
+  const { io: socketIo, httpServer } = setupSocketServer(app);
+
+  // Exported reference for other modules to use
+  exportedIo = socketIo;
+
+  httpServer.listen(3000, () => {
+    console.log(`Server is running at http://localhost:3000`);
   });
 
   // Test RabbitMQ connection (only in development)
@@ -55,6 +63,17 @@ const startServer = async () => {
 
   return app;
 };
+
+/**
+ * Exported socket.io instance. Modules that need to emit events can import
+ * this variable but should call `getIO()` to ensure it's initialized.
+ */
+export let exportedIo: SocketIOServer | null = null;
+
+export function getIO(): SocketIOServer {
+  if (!exportedIo) throw new Error('Socket.IO not initialized yet');
+  return exportedIo;
+}
 
 const server = startServer();
 export default server;

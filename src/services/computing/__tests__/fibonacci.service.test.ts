@@ -12,7 +12,7 @@ import {
 } from '@/services/computing/fibonacci.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
-import { COMPUTING_QUEUE } from '@/constants/computing.js';
+import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
 
 // Mock external dependencies
 jest.mock('../../queue/rabbitmq.service');
@@ -183,7 +183,7 @@ describe('FibonacciService', () => {
           result.taskId,
           expect.objectContaining({
             id: result.taskId,
-            type: 'fibonacci.calculate',
+            type: FIBONACCI_DATA_TYPE,
             input: { n: 10 },
             status: 'pending',
           }),
@@ -193,7 +193,7 @@ describe('FibonacciService', () => {
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
           expect.objectContaining({
-            topic: 'fibonacci.calculate',
+            topic: FIBONACCI_DATA_TYPE,
             taskId: result.taskId,
             data: { n: 10 },
           })
@@ -241,7 +241,7 @@ describe('FibonacciService', () => {
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
           expect.objectContaining({
-            topic: 'fibonacci.calculate',
+            topic: FIBONACCI_DATA_TYPE,
             taskId: result.taskId,
             data: { n: 0 },
           })

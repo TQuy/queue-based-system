@@ -1,3 +1,4 @@
+import { SendMessageOptions } from '@/types/queue.js';
 import type { Channel, ConsumeMessage, ChannelModel } from 'amqplib';
 import { connect } from 'amqplib';
 
@@ -41,7 +42,7 @@ class RabbitMQService {
    */
   async connect(): Promise<void> {
     try {
-      const amqpUrl = `${process.env['RABBITMQ_PROTOCOL'] || 'amqp'}://${process.env['RABBITMQ_USERNAME']}:${process.env['RABBITMQ_PASSWORD']}@${process.env['RABBITMQ_HOST'] || 'localhost'}:${process.env['RABBITMQ_PORT'] || 5672}`;
+      const amqpUrl = `${process.env['RABBITMQ_PROTOCOL'] || 'amqp'}://${process.env['RABBITMQ_USERNAME'] || 'myuser'}:${process.env['RABBITMQ_PASSWORD'] || 'mypassword'}@${process.env['RABBITMQ_HOST'] || 'localhost'}:${process.env['RABBITMQ_PORT'] || 5672}`;
       console.log(`[AMQP] Connecting to RabbitMQ at ${amqpUrl}`);
       this.conn = await connect(amqpUrl);
       console.log('[AMQP] RabbitMQ connection established');
@@ -106,11 +107,8 @@ class RabbitMQService {
   async sendMessage(
     queue: string,
     message: any,
-    options?: {
-      persistent?: boolean;
-      durable?: boolean;
-    }
-  ) {
+    options?: SendMessageOptions
+  ): Promise<void> {
     if (!this.publishChannel) {
       throw new Error('[AMQP] No publish channel found. Is service connected?');
     }

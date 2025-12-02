@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import type { Application } from 'express';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
 
 const swaggerOptions: swaggerJsdoc.Options = {
   definition: {
@@ -110,7 +111,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
             },
             type: {
               type: 'string',
-              example: 'fibonacci.calculate',
+              example: FIBONACCI_DATA_TYPE,
               description: 'Type of task being performed',
             },
             input: {

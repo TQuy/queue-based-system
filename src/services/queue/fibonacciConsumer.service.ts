@@ -1,9 +1,8 @@
 import { spawn } from 'child_process';
 import { isDev, isTest } from '@/utils/environment.utils.js';
-import { redisService } from '../datastore/redis.service.js';
 
 class FibonacciConsumerService {
-  async consume(taskId: string, { n }: { n: number }): Promise<number> {
+  async consume({ n }: { n: number }): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       // Determine script path and execution method based on environment
       const isDevelopment = isTest() || isDev();
@@ -20,14 +19,12 @@ class FibonacciConsumerService {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 
-      let result = '';
       let errorOutput = '';
 
-      // Collect stdout data
-      childProcess.stdout.on('data', (data: Buffer) => {
-        console.log('taskID', taskId);
-        result += data.toString();
-        redisService.updateTaskStatus(taskId, 'completed');
+      let chunks: string[] = [];
+      childProcess.stdout.setEncoding('utf8');
+      childProcess.stdout.on('data', (chunk: string) => {
+        chunks.push(chunk);
       });
 
       // Collect stderr data
@@ -39,6 +36,7 @@ class FibonacciConsumerService {
       childProcess.on('close', code => {
         if (code === 0) {
           try {
+            const result = chunks.join('');
             // Extract only digits from the result
             const digitsOnly = result.match(/\d+/);
 

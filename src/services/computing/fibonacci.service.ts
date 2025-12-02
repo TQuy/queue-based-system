@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
-import { COMPUTING_QUEUE } from '@/constants/computing.js';
+import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 import { TaskData } from '../datastore/types.js';
 import { isDev, isTest } from '@/utils/environment.utils.js';
@@ -51,7 +51,7 @@ export class FibonacciService {
     // Create task metadata
     const taskData: TaskData = {
       id: taskId,
-      type: 'fibonacci.calculate',
+      type: FIBONACCI_DATA_TYPE,
       input: { n },
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -65,7 +65,7 @@ export class FibonacciService {
 
       // Send message to RabbitMQ with task ID
       await rabbitMQService.sendMessage(COMPUTING_QUEUE, {
-        topic: 'fibonacci.calculate',
+        topic: FIBONACCI_DATA_TYPE,
         taskId,
         data: { n },
       });

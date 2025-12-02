@@ -8,4 +8,5 @@ export interface TaskData {
   result?: any;
   completedAt?: string;
   failedAt?: string;
+  socketId?: string;
 }
