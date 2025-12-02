@@ -1,4 +1,4 @@
-import { fibonacciConsumerService } from '@/services/queue/fibonacciConsumer.service.js';
+import { fibonacciConsumerService } from '@/services/queue/consumer/fibonacciConsumer.service.js';
 import * as wsService from '@/services/websocket/websocket.service.js';
 import { redisService } from '../datastore/redis.service.js';
 import { FIBONACCI_WS_COMPLETE_EVENT } from '@/constants/computing.js';
