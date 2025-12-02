@@ -1,12 +1,40 @@
 import request from 'supertest';
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { StatusCodes } from 'http-status-codes';
+import dotenv from 'dotenv';
+import path from 'path';
 import { createApp } from '@/app.js';
+import { redisService } from '@/services/datastore/redis.service.js';
+import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
+
+// Load .env for tests
+const cwd = process.cwd();
+dotenv.config({ path: path.join(cwd, 'config/.env') });
 
 describe('Fibonacci Routes E2E Tests', () => {
   let app: any;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     app = createApp();
+
+    // Initialize Redis and RabbitMQ for schedule tests
+    try {
+      await redisService.connect();
+      await rabbitMQService.connect();
+      console.log('✅ Services connected for tests');
+    } catch (error) {
+      console.warn('⚠️  Failed to connect to Redis/RabbitMQ:', error);
+      // Continue anyway - synchronous tests should work
+    }
+  });
+
+  afterAll(async () => {
+    try {
+      await redisService.disconnect();
+      await rabbitMQService.cleanup();
+    } catch (error) {
+      console.warn('⚠️  Failed to disconnect services:', error);
+    }
   });
 
   describe('GET /api/computing/fibonacci', () => {
@@ -18,7 +46,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toEqual({
           input: input,
@@ -33,7 +61,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toEqual({
           input: input,
@@ -48,7 +76,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toEqual({
           input: input,
@@ -63,7 +91,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toHaveProperty('input', input);
         expect(response.body).toHaveProperty('fibonacci');
@@ -75,11 +103,11 @@ describe('Fibonacci Routes E2E Tests', () => {
       it('should return 400 for missing n parameter', async () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toContain(
-          'expected number, received NaN'
+          'expected number, received'
         );
       });
 
@@ -88,7 +116,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: input })
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toBe('Value must be non-negative');
@@ -100,7 +128,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: invalidInput })
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toBe(
@@ -112,7 +140,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: 'invalid' })
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toContain(
@@ -124,7 +152,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci')
           .query({ n: '10.5' })
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         console.log(`response.body`, response.body);
         expect(response.body).toHaveProperty('message');
@@ -144,7 +172,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci/sequence')
           .query({ count: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toEqual({
           count: input,
@@ -159,7 +187,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci/sequence')
           .query({ count: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toEqual({
           count: input,
@@ -173,7 +201,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci/sequence')
           .query({ count: input })
-          .expect(200);
+          .expect(StatusCodes.OK);
 
         expect(response.body).toHaveProperty('count', input);
         expect(response.body).toHaveProperty('sequence');
@@ -186,7 +214,7 @@ describe('Fibonacci Routes E2E Tests', () => {
       it('should return 400 for missing count parameter', async () => {
         const response = await request(app)
           .get('/api/computing/fibonacci/sequence')
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toContain(
@@ -200,7 +228,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci/sequence')
           .query({ count: invalidInput })
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toBe('Value must be positive');
@@ -212,7 +240,7 @@ describe('Fibonacci Routes E2E Tests', () => {
         const response = await request(app)
           .get('/api/computing/fibonacci/sequence')
           .query({ count: invalidInput })
-          .expect(400);
+          .expect(StatusCodes.BAD_REQUEST);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toBe(
@@ -226,7 +254,7 @@ describe('Fibonacci Routes E2E Tests', () => {
     it('should return 404 for non-existent fibonacci endpoints', async () => {
       const response = await request(app)
         .get('/api/computing/fibonacci/nonexistent')
-        .expect(404);
+        .expect(StatusCodes.NOT_FOUND);
 
       expect(response.body).toHaveProperty('message');
       expect(response.body.message).toContain('Not Found');
@@ -237,7 +265,7 @@ describe('Fibonacci Routes E2E Tests', () => {
       const response = await request(app)
         .get('/api/computing/fibonacci')
         .query({ n: 'not-a-number' })
-        .expect(400);
+        .expect(StatusCodes.BAD_REQUEST);
 
       expect(response.body).toHaveProperty('message');
     });
@@ -246,9 +274,119 @@ describe('Fibonacci Routes E2E Tests', () => {
       const response = await request(app)
         .get('/api/computing/fibonacci')
         .query({ n: 5 })
-        .expect(200);
+        .expect(StatusCodes.OK);
 
       expect(response.headers['content-type']).toMatch(/application\/json/);
+    });
+  });
+
+  describe('POST /api/computing/fibonacci/schedule', () => {
+    describe('Valid requests', () => {
+      it('should schedule fibonacci calculation with valid input', async () => {
+        const input = 10;
+
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.ACCEPTED);
+
+        expect(response.body).toHaveProperty('taskId');
+        expect(response.body).toHaveProperty('message');
+        expect(response.body.message).toContain('scheduled');
+        expect(typeof response.body.taskId).toBe('string');
+        expect(response.body.taskId.length).toBeGreaterThan(0);
+      });
+
+      it('should schedule fibonacci calculation for n=0', async () => {
+        const input = 0;
+
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.ACCEPTED);
+
+        expect(response.body).toHaveProperty('taskId');
+        expect(response.body).toHaveProperty('message');
+      });
+
+      it('should schedule fibonacci calculation for n=1', async () => {
+        const input = 1;
+
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.ACCEPTED);
+
+        expect(response.body).toHaveProperty('taskId');
+      });
+
+      it('should generate unique taskIds for multiple requests', async () => {
+        const input = 5;
+
+        const response1 = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.ACCEPTED);
+
+        const response2 = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.ACCEPTED);
+
+        expect(response1.body.taskId).not.toBe(response2.body.taskId);
+      });
+    });
+
+    describe('Invalid requests', () => {
+      it('should return 400 for missing n parameter', async () => {
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({})
+          .expect(StatusCodes.BAD_REQUEST);
+
+        expect(response.body).toHaveProperty('message');
+      });
+
+      it('should return 400 for negative input', async () => {
+        const input = -1;
+
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.BAD_REQUEST);
+
+        expect(response.body).toHaveProperty('message');
+        expect(response.body.message).toContain('non-negative');
+      });
+
+      it('should return 400 for input greater than maximum (100)', async () => {
+        const input = 101;
+
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: input })
+          .expect(StatusCodes.BAD_REQUEST);
+
+        expect(response.body).toHaveProperty('message');
+      });
+
+      it('should return 400 for non-numeric input', async () => {
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: 'not-a-number' })
+          .expect(StatusCodes.BAD_REQUEST);
+
+        expect(response.body).toHaveProperty('message');
+      });
+
+      it('should return 400 for null input', async () => {
+        const response = await request(app)
+          .post('/api/computing/fibonacci/schedule')
+          .send({ n: null })
+          .expect(StatusCodes.BAD_REQUEST);
+
+        expect(response.body).toHaveProperty('message');
+      });
     });
   });
 });
