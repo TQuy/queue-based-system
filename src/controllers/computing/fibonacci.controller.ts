@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
 import type { Request, Response } from 'express';
 import { fibonacciService } from '@/services/computing/fibonacci.service.js';
@@ -54,11 +55,11 @@ export const getFibonacci = (req: Request, res: Response): void => {
   } catch (error) {
     if (error instanceof ZodError) {
       const errorRes = getZodErrorResponse(error);
-      res.status(400).json(errorRes);
+      res.status(StatusCodes.BAD_REQUEST).json(errorRes);
       return;
     }
     console.error(error);
-    res.status(500).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Internal server error',
     });
   }
@@ -75,11 +76,11 @@ export const getFibonacciAsync = async (req: Request, res: Response): Promise<vo
   } catch (error) {
     if (error instanceof ZodError) {
       const errorRes = getZodErrorResponse(error);
-      res.status(400).json(errorRes);
+      res.status(StatusCodes.BAD_REQUEST).json(errorRes);
       return;
     }
     console.error(error);
-    res.status(500).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Internal server error',
     });
   }
@@ -133,10 +134,10 @@ export const getFibonacciSequence = (req: Request, res: Response): void => {
   } catch (error) {
     if (error instanceof ZodError) {
       const errorRes = getZodErrorResponse(error);
-      res.status(400).json(errorRes);
+      res.status(StatusCodes.BAD_REQUEST).json(errorRes);
       return;
     }
-    res.status(500).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Internal server error',
     });
   }
@@ -257,17 +258,17 @@ export const scheduleFibonacciCalculation = async (
   try {
     const n = validateFibonacciInput.parse(req.body.n);
     const { taskId } = await fibonacciService.scheduleFibonacciCalculation(n);
-    res.json({
+    res.status(StatusCodes.ACCEPTED).json({
       taskId: taskId,
       message: 'Fibonacci calculation has been scheduled.',
     });
   } catch (error) {
     if (error instanceof ZodError) {
       const errorRes = getZodErrorResponse(error);
-      res.status(400).json(errorRes);
+      res.status(StatusCodes.BAD_REQUEST).json(errorRes);
       return;
     }
-    res.status(500).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error instanceof Error ? error.message : 'Internal server error',
     });
   }
