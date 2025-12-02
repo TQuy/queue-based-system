@@ -4,8 +4,8 @@ import { Server, Socket } from 'socket.io';
 import { redisService } from './services/datastore/redis.service.js';
 import { TaskData } from './services/datastore/types.js';
 import * as wsService from '@/services/websocket/websocket.service.js';
-import { FIBONACCI_WS_COMPLETE_EVENT } from './constants/computing.js';
-import { isTaskCompleted } from './utils/datastore/datastore.utils.js';
+import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from './constants/computing.js';
+import { isTaskCompleted, isTaskFailed } from './utils/datastore/datastore.utils.js';
 
 
 export function setupSocketServer(app: Application) {
@@ -68,7 +68,16 @@ async function handleCommunicationFibonacciTask(socket: Socket, taskData: TaskDa
             },
             FIBONACCI_WS_COMPLETE_EVENT
         );
-    } else {
+    } else if (isTaskFailed(taskData)) {
+        await wsService.replyWithResult(
+            {
+                ...taskData,
+                socketId: socket.id
+            },
+            FIBONACCI_WS_FAILED_EVENT
+        );
+    }
+    else {
         // assign socketId to task for future response
         redisService.updateTask(taskData.id, { socketId: socket.id });
     }

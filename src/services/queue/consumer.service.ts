@@ -1,7 +1,7 @@
 import { fibonacciConsumerService } from '@/services/queue/consumer/fibonacciConsumer.service.js';
 import * as wsService from '@/services/websocket/websocket.service.js';
 import { redisService } from '../datastore/redis.service.js';
-import { FIBONACCI_WS_COMPLETE_EVENT } from '@/constants/computing.js';
+import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
 
 export const consumerFactory = async (msg: {
   topic: string;
@@ -23,15 +23,26 @@ export const consumerFactory = async (msg: {
           success = true;
           console.log(`Fibonacci task consumed with result: ${result}`);
         } finally {
-          if (success) {
-            redisService.updateTask(msg.taskId, { status: 'completed', result: result });
+          const updateTaskStatus = async () => {
+            if (success) {
+              redisService.updateTask(msg.taskId, { status: 'completed', result: result });
+            } else {
+              redisService.updateTaskStatus(msg.taskId, 'failed');
+            }
+          }
+          const replyThroughWebSocket = async () => {
             const taskData = await redisService.getTask(msg.taskId);
             if (taskData) {
-              wsService.replyWithResult(taskData, FIBONACCI_WS_COMPLETE_EVENT);
+              await wsService.replyWithResult(
+                taskData,
+                success ? FIBONACCI_WS_COMPLETE_EVENT : FIBONACCI_WS_FAILED_EVENT
+              );
             }
-          } else {
-            redisService.updateTaskStatus(msg.taskId, 'failed');
           }
+          await Promise.all([
+            updateTaskStatus(),
+            replyThroughWebSocket(),
+          ])
         }
       }
       break;
