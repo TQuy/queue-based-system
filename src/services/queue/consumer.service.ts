@@ -1,7 +1,7 @@
 import { fibonacciConsumerService } from '@/services/queue/consumer/fibonacciConsumer.service.js';
-import * as wsService from '@/services/websocket/websocket.service.js';
-import { redisService } from '../datastore/redis.service.js';
+import { redisService } from '@/services/datastore/redis.service.js';
 import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
+import { WebsocketService } from '@/services/websocket/websocket.service.js';
 
 export const consumerFactory = async (msg: {
   topic: string;
@@ -33,7 +33,7 @@ export const consumerFactory = async (msg: {
           const replyThroughWebSocket = async () => {
             const taskData = await redisService.getTask(msg.taskId);
             if (taskData) {
-              await wsService.replyWithResult(
+              await WebsocketService.replyWithResult(
                 taskData,
                 success ? FIBONACCI_WS_COMPLETE_EVENT : FIBONACCI_WS_FAILED_EVENT
               );

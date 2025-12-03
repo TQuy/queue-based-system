@@ -12,6 +12,7 @@ export interface TaskData {
 }
 
 export interface DatastoreService {
+    connect: () => Promise<void>;
     setTask: (key: string, value: TaskData) => Promise<any>;
     getTask: (key: string) => Promise<TaskData | null>;
     updateTask: (key: string, updateData: Partial<TaskData>) => Promise<boolean>;

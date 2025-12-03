@@ -4,29 +4,30 @@ import { createApp } from '@/app.js';
 import type { Server as SocketIOServer } from 'socket.io';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { consumerFactory } from '@/services/queue/consumer.service.js';
-import { redisService } from './services/datastore/redis.service.js';
-import { setupSocketServer } from './websocket.js';
+import { redisService } from '@/services/datastore/redis.service.js';
+import { setupSocketServer } from '@/websocket.js';
+import { DatastoreService } from '@/types/datastore.js';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
 
 dotenv.config({ path: path.join(cwd, 'config/.env') });
 
-const startServer = async () => {
+const startServer = async (datastoreService: DatastoreService) => {
   const app = createApp();
   const port: number =
     (process.env['PORT'] && parseInt(process.env['PORT'])) || 3000;
   await rabbitMQService.connect();
-  await redisService.connect();
+  await datastoreService.connect();
 
   // Setup Socket.IO with the Express app
-  const { io: socketIo, httpServer } = setupSocketServer(app);
+  const { io: socketIo, httpServer } = setupSocketServer(app, redisService);
 
   // Exported reference for other modules to use
   exportedIo = socketIo;
 
-  httpServer.listen(3000, () => {
-    console.log(`Server is running at http://localhost:3000`);
+  httpServer.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
   });
 
   // Test RabbitMQ connection (only in development)
@@ -75,5 +76,5 @@ export function getIO(): SocketIOServer {
   return exportedIo;
 }
 
-const server = startServer();
+const server = startServer(redisService);
 export default server;

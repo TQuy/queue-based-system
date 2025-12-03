@@ -1,14 +1,16 @@
 import { createServer } from 'node:http';
 import type { Application } from 'express';
 import { Server, Socket } from 'socket.io';
-import { redisService } from '@/services/datastore/redis.service.js';
-import * as wsService from '@/services/websocket/websocket.service.js';
 import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
 import { isTaskCompleted, isTaskFailed } from '@/utils/datastore/datastore.utils.js';
-import { TaskData } from '@/types/index.js';
+import { DatastoreService, TaskData } from '@/types/index.js';
+import { WebsocketService } from './services/websocket/websocket.service.js';
 
 
-export function setupSocketServer(app: Application) {
+export function setupSocketServer(
+    app: Application,
+    datastoreService: DatastoreService
+) {
     // Create an HTTP server from the Express app
     const httpServer = createServer(app);
 
@@ -25,10 +27,10 @@ export function setupSocketServer(app: Application) {
         console.log(`User connected: ${socket.id}`);
         const taskId = socket.handshake.query.taskId as string;
         if (taskId) {
-            const taskData = await redisService.getTask(taskId);
+            const taskData = await datastoreService.getTask(taskId);
             if (taskData) {
                 console.log(`TaskData associated with taskId ${taskId}: ${JSON.stringify(taskData)}`)
-                await taskCommunicationFactory(taskData, socket);
+                await taskCommunicationFactory(taskData, socket, datastoreService);
             }
         }
 
@@ -48,20 +50,28 @@ export function setupSocketServer(app: Application) {
     return { httpServer, io };
 }
 
-async function taskCommunicationFactory(taskData: TaskData, socket: Socket) {
+async function taskCommunicationFactory(
+    taskData: TaskData,
+    socket: Socket,
+    datastoreService: DatastoreService
+): Promise<void> {
     switch (taskData.type) {
         case 'fibonacci:calculate':
-            await handleCommunicationFibonacciTask(socket, taskData);
+            await handleCommunicationFibonacciTask(socket, taskData, datastoreService);
             break;
         default:
             throw new Error(`No handler for task type: ${taskData.type}`);
     }
 }
 
-async function handleCommunicationFibonacciTask(socket: Socket, taskData: TaskData): Promise<void> {
+async function handleCommunicationFibonacciTask(
+    socket: Socket,
+    taskData: TaskData,
+    datastoreService: DatastoreService
+): Promise<void> {
     if (isTaskCompleted(taskData)) {
         // If task already completed, send result immediately
-        await wsService.replyWithResult(
+        await WebsocketService.replyWithResult(
             {
                 ...taskData,
                 socketId: socket.id
@@ -69,7 +79,7 @@ async function handleCommunicationFibonacciTask(socket: Socket, taskData: TaskDa
             FIBONACCI_WS_COMPLETE_EVENT
         );
     } else if (isTaskFailed(taskData)) {
-        await wsService.replyWithResult(
+        await WebsocketService.replyWithResult(
             {
                 ...taskData,
                 socketId: socket.id
@@ -79,6 +89,6 @@ async function handleCommunicationFibonacciTask(socket: Socket, taskData: TaskDa
     }
     else {
         // assign socketId to task for future response
-        redisService.updateTask(taskData.id, { socketId: socket.id });
+        await datastoreService.updateTask(taskData.id, { socketId: socket.id });
     }
 }
