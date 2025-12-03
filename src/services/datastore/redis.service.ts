@@ -1,8 +1,8 @@
 import { createClient, RedisClientType } from 'redis';
 import { isDev, isTest } from '@/utils/environment.utils.js';
-import { TaskData } from './types.js';
+import { DatastoreService, TaskData } from '@/types/index.js';
 
-export class RedisService {
+export class RedisService implements DatastoreService {
   private client: RedisClientType | null = null;
   private isConnected = false;
 

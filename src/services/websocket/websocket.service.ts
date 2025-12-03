@@ -1,5 +1,5 @@
 import { getIO } from "@/index.js";
-import { TaskData } from "@/services/datastore/types.js";
+import { TaskData } from "@/types/index.js";
 
 /**Use websocket to return the result data */
 export async function replyWithResult(

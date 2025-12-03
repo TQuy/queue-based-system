@@ -1,11 +1,11 @@
 import { createServer } from 'node:http';
 import type { Application } from 'express';
 import { Server, Socket } from 'socket.io';
-import { redisService } from './services/datastore/redis.service.js';
-import { TaskData } from './services/datastore/types.js';
+import { redisService } from '@/services/datastore/redis.service.js';
 import * as wsService from '@/services/websocket/websocket.service.js';
-import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from './constants/computing.js';
-import { isTaskCompleted, isTaskFailed } from './utils/datastore/datastore.utils.js';
+import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
+import { isTaskCompleted, isTaskFailed } from '@/utils/datastore/datastore.utils.js';
+import { TaskData } from '@/types/index.js';
 
 
 export function setupSocketServer(app: Application) {

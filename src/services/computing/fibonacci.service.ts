@@ -6,8 +6,8 @@ import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
 import { redisService } from '@/services/datastore/redis.service.js';
-import { TaskData } from '../datastore/types.js';
 import { isDev, isTest } from '@/utils/environment.utils.js';
+import { TaskData } from '@/types/index.js';
 
 export class FibonacciService {
   /**
