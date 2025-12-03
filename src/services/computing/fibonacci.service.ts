@@ -35,16 +35,7 @@ export class FibonacciService {
     return sequence;
   }
 
-  // Instance methods for compatibility
-  calculate(n: number): number {
-    return FibonacciService.calculateFibonacci(n);
-  }
-
-  generateSequence(n: number): number[] {
-    return FibonacciService.getFibonacciSequence(n);
-  }
-
-  async scheduleFibonacciCalculation(n: number): Promise<{ taskId: string }> {
+  static async scheduleFibonacciCalculation(n: number): Promise<{ taskId: string }> {
     // Generate unique task ID
     const taskId = uuidv4();
 
@@ -88,7 +79,7 @@ export class FibonacciService {
     }
   }
 
-  async calculateAsync(n: number): Promise<number> {
+  static async calculateAsync(n: number): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       // In dev/test: use tsx to run TS files with path aliases
       // In prod: use compiled JS (no runtime TS/path-alias overhead)
@@ -136,5 +127,4 @@ export class FibonacciService {
 
 
 // Export both class and instance
-export const fibonacciService = new FibonacciService();
 export default FibonacciService;

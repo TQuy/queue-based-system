@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
 import type { Request, Response } from 'express';
-import { fibonacciService } from '@/services/computing/fibonacci.service.js';
+import FibonacciService from '@/services/computing/fibonacci.service.js';
 import {
   validateFibonacciInput,
   validateFibonacciSequenceInput,
@@ -47,7 +47,7 @@ import { getZodErrorResponse } from '@/utils/validation.utils.js';
 export const getFibonacci = (req: Request, res: Response): void => {
   try {
     const num = validateFibonacciInput.parse(req.query['n']);
-    const result = fibonacciService.calculate(num);
+    const result = FibonacciService.calculateFibonacci(num);
     res.json({
       input: num,
       fibonacci: result,
@@ -68,7 +68,7 @@ export const getFibonacci = (req: Request, res: Response): void => {
 export const getFibonacciAsync = async (req: Request, res: Response): Promise<void> => {
   try {
     const num = validateFibonacciInput.parse(req.query['n']);
-    const result = await fibonacciService.calculateAsync(num);
+    const result = await FibonacciService.calculateAsync(num);
     res.json({
       input: num,
       fibonacci: result,
@@ -125,7 +125,7 @@ export const getFibonacciAsync = async (req: Request, res: Response): Promise<vo
 export const getFibonacciSequence = (req: Request, res: Response): void => {
   try {
     const count = validateFibonacciSequenceInput.parse(req.query['count']);
-    const sequence = fibonacciService.generateSequence(count);
+    const sequence = FibonacciService.getFibonacciSequence(count);
 
     res.json({
       count,
@@ -257,7 +257,7 @@ export const scheduleFibonacciCalculation = async (
 ): Promise<void> => {
   try {
     const n = validateFibonacciInput.parse(req.body.n);
-    const { taskId } = await fibonacciService.scheduleFibonacciCalculation(n);
+    const { taskId } = await FibonacciService.scheduleFibonacciCalculation(n);
     res.status(StatusCodes.ACCEPTED).json({
       taskId: taskId,
       message: 'Fibonacci calculation has been scheduled.',

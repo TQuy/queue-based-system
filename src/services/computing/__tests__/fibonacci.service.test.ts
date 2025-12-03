@@ -8,7 +8,6 @@ import {
 } from '@jest/globals';
 import {
   FibonacciService,
-  fibonacciService,
 } from '@/services/computing/fibonacci.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
@@ -121,7 +120,7 @@ describe('FibonacciService', () => {
         const input = 8;
         const expectedResult = 21;
 
-        const result = fibonacciService.calculate(input);
+        const result = FibonacciService.calculateFibonacci(input);
         expect(result).toBe(expectedResult);
       });
 
@@ -129,25 +128,25 @@ describe('FibonacciService', () => {
         const input = 0;
         const expectedResult = 0;
 
-        const result = fibonacciService.calculate(input);
+        const result = FibonacciService.calculateFibonacci(input);
         expect(result).toBe(expectedResult);
       });
 
       it('should handle error from static method', () => {
         const invalidInput = -5;
 
-        expect(() => fibonacciService.calculate(invalidInput)).toThrow(
+        expect(() => FibonacciService.calculateFibonacci(invalidInput)).toThrow(
           'Fibonacci position must be non-negative'
         );
       });
     });
 
-    describe('generateSequence', () => {
+    describe('getFibonacciSequence', () => {
       it('should delegate to static getFibonacciSequence method', () => {
         const input = 3;
         const expectedSequence = [0, 1, 1, 2];
 
-        const result = fibonacciService.generateSequence(input);
+        const result = FibonacciService.getFibonacciSequence(input);
         expect(result).toEqual(expectedSequence);
       });
 
@@ -155,14 +154,14 @@ describe('FibonacciService', () => {
         const input = 0;
         const expectedSequence = [0];
 
-        const result = fibonacciService.generateSequence(input);
+        const result = FibonacciService.getFibonacciSequence(input);
         expect(result).toEqual(expectedSequence);
       });
 
       it('should handle error from static method', () => {
         const invalidInput = -2;
 
-        expect(() => fibonacciService.generateSequence(invalidInput)).toThrow(
+        expect(() => FibonacciService.getFibonacciSequence(invalidInput)).toThrow(
           'Fibonacci sequence length must be non-negative'
         );
       });
@@ -177,7 +176,7 @@ describe('FibonacciService', () => {
       });
 
       it('should send message to RabbitMQ service successfully', async () => {
-        const result = await fibonacciService.scheduleFibonacciCalculation(10);
+        const result = await FibonacciService.scheduleFibonacciCalculation(10);
 
         expect(mockRedisService.setTask).toHaveBeenCalledWith(
           result.taskId,
@@ -212,7 +211,7 @@ describe('FibonacciService', () => {
         mockRabbitMQService.sendMessage.mockRejectedValue(error);
 
         await expect(
-          fibonacciService.scheduleFibonacciCalculation(5)
+          FibonacciService.scheduleFibonacciCalculation(5)
         ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
         expect(mockRedisService.setTask).toHaveBeenCalled();
@@ -228,7 +227,7 @@ describe('FibonacciService', () => {
         mockRabbitMQService.sendMessage.mockRejectedValue(error);
 
         await expect(
-          fibonacciService.scheduleFibonacciCalculation(7)
+          FibonacciService.scheduleFibonacciCalculation(7)
         ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
         expect(mockRedisService.setTask).toHaveBeenCalled();
@@ -236,7 +235,7 @@ describe('FibonacciService', () => {
       });
 
       it('should handle edge case with zero input', async () => {
-        const result = await fibonacciService.scheduleFibonacciCalculation(0);
+        const result = await FibonacciService.scheduleFibonacciCalculation(0);
 
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
@@ -249,23 +248,6 @@ describe('FibonacciService', () => {
 
         expect(result.taskId).toBeDefined();
       });
-    });
-  });
-
-  describe('Class and Instance Export', () => {
-    it('should export both class and instance', () => {
-      expect(FibonacciService).toBeDefined();
-      expect(fibonacciService).toBeDefined();
-      expect(fibonacciService).toBeInstanceOf(FibonacciService);
-    });
-
-    it('should maintain separate state for different instances', () => {
-      const instance1 = new FibonacciService();
-      const instance2 = new FibonacciService();
-
-      expect(instance1).not.toBe(instance2);
-      expect(instance1).toBeInstanceOf(FibonacciService);
-      expect(instance2).toBeInstanceOf(FibonacciService);
     });
   });
 });
