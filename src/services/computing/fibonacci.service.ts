@@ -5,9 +5,9 @@ import path from 'path';
 import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
-import { redisService } from '@/services/datastore/redis.service.js';
 import { isDev, isTest } from '@/utils/environment.utils.js';
 import { TaskData } from '@/types/index.js';
+import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 
 export class FibonacciService {
   /**
@@ -50,9 +50,10 @@ export class FibonacciService {
     };
     let success = true;
 
+    const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
     try {
       // Store task in Redis with expiration (24 hours)
-      await redisService.setTask(taskId, taskData, 86400);
+      await dataStoreService.setTask(taskId, taskData, 86400);
 
       // Send message to RabbitMQ with task ID
       await rabbitMQService.sendMessage(COMPUTING_QUEUE, {
@@ -70,7 +71,7 @@ export class FibonacciService {
     } finally {
       const status = success ? 'queued' : 'failed';
       try {
-        await redisService.updateTaskStatus(taskId, status);
+        await dataStoreService.updateTaskStatus(taskId, status);
       } catch (updateError) {
         console.error(
           new Error(`Failed to update task status to ${status}:`, { cause: updateError })

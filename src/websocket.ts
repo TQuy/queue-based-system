@@ -4,12 +4,12 @@ import { Server, Socket } from 'socket.io';
 import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
 import { isTaskCompleted, isTaskFailed } from '@/utils/datastore/datastore.utils.js';
 import { DatastoreService, TaskData } from '@/types/index.js';
-import { WebsocketService } from './services/websocket/websocket.service.js';
+import { WebsocketService } from '@/services/websocket/websocket.service.js';
 
 
 export function setupSocketServer(
     app: Application,
-    datastoreService: DatastoreService
+    dataStoreService: DatastoreService
 ) {
     // Create an HTTP server from the Express app
     const httpServer = createServer(app);
@@ -27,10 +27,10 @@ export function setupSocketServer(
         console.log(`User connected: ${socket.id}`);
         const taskId = socket.handshake.query.taskId as string;
         if (taskId) {
-            const taskData = await datastoreService.getTask(taskId);
+            const taskData = await dataStoreService.getTask(taskId);
             if (taskData) {
                 console.log(`TaskData associated with taskId ${taskId}: ${JSON.stringify(taskData)}`)
-                await taskCommunicationFactory(taskData, socket, datastoreService);
+                await taskCommunicationFactory(taskData, socket, dataStoreService);
             }
         }
 
@@ -53,11 +53,11 @@ export function setupSocketServer(
 async function taskCommunicationFactory(
     taskData: TaskData,
     socket: Socket,
-    datastoreService: DatastoreService
+    dataStoreService: DatastoreService
 ): Promise<void> {
     switch (taskData.type) {
         case 'fibonacci:calculate':
-            await handleCommunicationFibonacciTask(socket, taskData, datastoreService);
+            await handleCommunicationFibonacciTask(socket, taskData, dataStoreService);
             break;
         default:
             throw new Error(`No handler for task type: ${taskData.type}`);
@@ -67,7 +67,7 @@ async function taskCommunicationFactory(
 async function handleCommunicationFibonacciTask(
     socket: Socket,
     taskData: TaskData,
-    datastoreService: DatastoreService
+    dataStoreService: DatastoreService
 ): Promise<void> {
     if (isTaskCompleted(taskData)) {
         // If task already completed, send result immediately
@@ -89,6 +89,6 @@ async function handleCommunicationFibonacciTask(
     }
     else {
         // assign socketId to task for future response
-        await datastoreService.updateTask(taskData.id, { socketId: socket.id });
+        await dataStoreService.updateTask(taskData.id, { socketId: socket.id });
     }
 }

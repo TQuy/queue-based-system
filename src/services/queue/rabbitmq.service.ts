@@ -1,6 +1,6 @@
 import { SendMessageOptions } from '@/types/queue.js';
 import type { Channel, ConsumeMessage, ChannelModel } from 'amqplib';
-import { connect } from 'amqplib';
+import { connect as amqpConnect } from 'amqplib';
 
 /**
  * A production-ready RabbitMQ service that manages a single connection
@@ -15,7 +15,7 @@ class RabbitMQService {
   private static instance: RabbitMQService;
 
   // Private constructor for singleton
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Gets the singleton instance of the RabbitMQService.
@@ -44,7 +44,7 @@ class RabbitMQService {
     try {
       const amqpUrl = `${process.env['RABBITMQ_PROTOCOL'] || 'amqp'}://${process.env['RABBITMQ_USERNAME'] || 'myuser'}:${process.env['RABBITMQ_PASSWORD'] || 'mypassword'}@${process.env['RABBITMQ_HOST'] || 'localhost'}:${process.env['RABBITMQ_PORT'] || 5672}`;
       console.log(`[AMQP] Connecting to RabbitMQ at ${amqpUrl}`);
-      this.conn = await connect(amqpUrl);
+      this.conn = await amqpConnect(amqpUrl);
       console.log('[AMQP] RabbitMQ connection established');
 
       // Handle connection errors

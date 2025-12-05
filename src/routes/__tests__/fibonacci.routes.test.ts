@@ -6,36 +6,41 @@ import path from 'path';
 import { createApp } from '@/app.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
+import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
+import { Application } from 'express';
 
 // Load .env for tests
 const cwd = process.cwd();
 dotenv.config({ path: path.join(cwd, 'config/.env') });
 
 describe('Fibonacci Routes E2E Tests', () => {
-  let app: any;
+  let app: Application;
 
   beforeAll(async () => {
-    app = createApp();
-
     // Initialize Redis and RabbitMQ for schedule tests
     try {
-      await redisService.connect();
+      app = createApp(redisService);
+      const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
+      await dataStoreService.connect();
       await rabbitMQService.connect();
       console.log('✅ Services connected for tests');
     } catch (error) {
       console.warn('⚠️  Failed to connect to Redis/RabbitMQ:', error);
       // Continue anyway - synchronous tests should work
     }
-  });
+  }, 30000); // 30s timeout for service initialization
 
   afterAll(async () => {
     try {
-      await redisService.disconnect();
+      const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
+      await dataStoreService.disconnect();
       await rabbitMQService.cleanup();
+      // Give time for all async operations to complete before exiting
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       console.warn('⚠️  Failed to disconnect services:', error);
     }
-  });
+  }, 30000); // 30s timeout for cleanup
 
   describe('GET /api/computing/fibonacci', () => {
     describe('Valid requests', () => {

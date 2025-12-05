@@ -6,23 +6,34 @@ import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { consumerFactory } from '@/services/queue/consumer.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 import { setupSocketServer } from '@/websocket.js';
-import { DatastoreService } from '@/types/datastore.js';
+import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
-
 dotenv.config({ path: path.join(cwd, 'config/.env') });
 
-const startServer = async (datastoreService: DatastoreService) => {
-  const app = createApp();
+
+/**
+ * Exported socket.io instance. Modules that need to emit events can import
+ * this variable but should call `getIO()` to ensure it's initialized.
+ */
+export let exportedIo: SocketIOServer | null = null;
+
+export function getIO(): SocketIOServer {
+  if (!exportedIo) throw new Error('Socket.IO not initialized yet');
+  return exportedIo;
+}
+
+export async function startServer() {
+  const app = createApp(redisService);
   const port: number =
     (process.env['PORT'] && parseInt(process.env['PORT'])) || 3000;
   await rabbitMQService.connect();
-  await datastoreService.connect();
+  const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
+  await dataStoreService.connect();
 
   // Setup Socket.IO with the Express app
-  const { io: socketIo, httpServer } = setupSocketServer(app, redisService);
-
+  const { io: socketIo, httpServer } = setupSocketServer(app, dataStoreService);
   // Exported reference for other modules to use
   exportedIo = socketIo;
 
@@ -48,7 +59,7 @@ const startServer = async (datastoreService: DatastoreService) => {
           console.log('[TEST][AMQP] 🧹 Test queue cleaned up');
           await rabbitMQService.startConsumer(
             'computing_queue',
-            consumerFactory
+            (msg: any) => consumerFactory(dataStoreService!, msg)
           );
 
           return true;
@@ -65,16 +76,5 @@ const startServer = async (datastoreService: DatastoreService) => {
   return app;
 };
 
-/**
- * Exported socket.io instance. Modules that need to emit events can import
- * this variable but should call `getIO()` to ensure it's initialized.
- */
-export let exportedIo: SocketIOServer | null = null;
-
-export function getIO(): SocketIOServer {
-  if (!exportedIo) throw new Error('Socket.IO not initialized yet');
-  return exportedIo;
-}
-
-const server = startServer(redisService);
+const server = startServer();
 export default server;

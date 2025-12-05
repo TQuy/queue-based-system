@@ -1,13 +1,16 @@
 import { fibonacciConsumerService } from '@/services/queue/consumer/fibonacciConsumer.service.js';
-import { redisService } from '@/services/datastore/redis.service.js';
 import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
 import { WebsocketService } from '@/services/websocket/websocket.service.js';
+import { DatastoreService } from '@/types/datastore.js';
 
-export const consumerFactory = async (msg: {
+export const consumerFactory = async (
+  dataStoreService: DatastoreService,
+  msg: {
   topic: string;
   data: any;
   taskId: string;
-}): Promise<boolean> => {
+  },
+): Promise<boolean> => {
   console.log('Received message with topic:', msg.topic);
   const parts = msg.topic.split(':');
   if (!parts.length) throw new Error('Empty topic');
@@ -25,13 +28,13 @@ export const consumerFactory = async (msg: {
         } finally {
           const updateTaskStatus = async () => {
             if (success) {
-              redisService.updateTask(msg.taskId, { status: 'completed', result: result });
+              dataStoreService.updateTask(msg.taskId, { status: 'completed', result: result });
             } else {
-              redisService.updateTaskStatus(msg.taskId, 'failed');
+              dataStoreService.updateTask(msg.taskId, { status: 'failed' });
             }
           }
           const replyThroughWebSocket = async () => {
-            const taskData = await redisService.getTask(msg.taskId);
+            const taskData = await dataStoreService.getTask(msg.taskId);
             if (taskData) {
               await WebsocketService.replyWithResult(
                 taskData,

@@ -1,9 +1,10 @@
 import request from 'supertest'; // A popular library for testing HTTP
 import { describe, it, expect } from '@jest/globals';
 import { createApp } from '@/app.js';
+import { redisService } from '@/services/datastore/redis.service.js';
 
 // Create the app instance *once* for all tests in this suite
-const app = createApp();
+const app = createApp(redisService);
 
 describe('GET /health', () => {
   it('should return 200 OK and status: ok', async () => {

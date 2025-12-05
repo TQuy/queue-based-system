@@ -10,8 +10,10 @@ import {
   FibonacciService,
 } from '@/services/computing/fibonacci.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
-import { redisService } from '@/services/datastore/redis.service.js';
 import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
+import { DatastoreService } from '@/types/datastore.js';
+import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
+import { redisService } from '@/services/datastore/redis.service.js';
 
 // Mock external dependencies
 jest.mock('../../queue/rabbitmq.service');
@@ -20,12 +22,14 @@ jest.mock('../../datastore/redis.service');
 const mockRabbitMQService = rabbitMQService as jest.Mocked<
   typeof rabbitMQService
 >;
-const mockRedisService = redisService as jest.Mocked<typeof redisService>;
+const mockDataStoreService = redisService as jest.Mocked<typeof redisService>;
+const mockDataStoreServiceManager = dataStoreServiceManager as jest.Mocked<typeof dataStoreServiceManager>;
 
 // Ensure services are properly mocked
 mockRabbitMQService.sendMessage = jest.fn();
-mockRedisService.setTask = jest.fn();
-mockRedisService.updateTaskStatus = jest.fn();
+mockDataStoreService.setTask = jest.fn();
+mockDataStoreService.updateTaskStatus = jest.fn();
+mockDataStoreServiceManager.getDataStoreServiceInstance = jest.fn(() => mockDataStoreService);
 
 describe('FibonacciService', () => {
   beforeEach(() => {
@@ -170,15 +174,15 @@ describe('FibonacciService', () => {
     describe('scheduleFibonacciCalculation', () => {
       beforeEach(() => {
         // Mock Redis operations to return successful results by default
-        mockRedisService.setTask.mockResolvedValue(true);
-        mockRedisService.updateTaskStatus.mockResolvedValue(true);
+        mockDataStoreService.setTask.mockResolvedValue(true);
+        mockDataStoreService.updateTaskStatus.mockResolvedValue(true);
         mockRabbitMQService.sendMessage.mockResolvedValue(undefined);
       });
 
       it('should send message to RabbitMQ service successfully', async () => {
         const result = await FibonacciService.scheduleFibonacciCalculation(10);
 
-        expect(mockRedisService.setTask).toHaveBeenCalledWith(
+        expect(mockDataStoreService.setTask).toHaveBeenCalledWith(
           result.taskId,
           expect.objectContaining({
             id: result.taskId,
@@ -198,7 +202,7 @@ describe('FibonacciService', () => {
           })
         );
 
-        expect(mockRedisService.updateTaskStatus).toHaveBeenCalledWith(
+        expect(mockDataStoreService.updateTaskStatus).toHaveBeenCalledWith(
           result.taskId,
           'queued'
         );
@@ -214,9 +218,9 @@ describe('FibonacciService', () => {
           FibonacciService.scheduleFibonacciCalculation(5)
         ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
-        expect(mockRedisService.setTask).toHaveBeenCalled();
+        expect(mockDataStoreService.setTask).toHaveBeenCalled();
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalled();
-        expect(mockRedisService.updateTaskStatus).toHaveBeenCalledWith(
+        expect(mockDataStoreService.updateTaskStatus).toHaveBeenCalledWith(
           expect.any(String),
           'failed'
         );
@@ -230,7 +234,7 @@ describe('FibonacciService', () => {
           FibonacciService.scheduleFibonacciCalculation(7)
         ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
-        expect(mockRedisService.setTask).toHaveBeenCalled();
+        expect(mockDataStoreService.setTask).toHaveBeenCalled();
         expect(mockRabbitMQService.sendMessage).toHaveBeenCalled();
       });
 

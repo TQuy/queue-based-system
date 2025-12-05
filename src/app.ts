@@ -1,17 +1,20 @@
-import express from 'express';
+import express, { application } from 'express';
 import morgan from 'morgan';
 import type { Request, Response, Application, NextFunction } from 'express';
 import { setupSwagger } from '@/config/swagger.js';
 import apiRoutes from '@/routes/api.routes.js';
+import { DatastoreService } from '@/types/datastore.js';
+import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 
 /**
  * Creates and configures an Express application.
  * This function initializes the app, sets up middleware,
  * defines routes, and configures error handling.
- *
- * @returns {Application} The configured Express application instance.
- */
-export const createApp = (): Application => {
+*
+* @returns {Application} The configured Express application instance.
+*/
+export function createApp(dataStore: DatastoreService): Application {
+  dataStoreServiceManager.setDataStoreServiceInstance(dataStore);
   const app: Application = express();
   app.use(morgan('dev'));
   // --- 1. Core Middleware ---
@@ -56,5 +59,5 @@ export const createApp = (): Application => {
     });
   });
 
-  return app;
+  return app
 };
