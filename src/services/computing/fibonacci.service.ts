@@ -3,11 +3,11 @@ import { Worker } from 'worker_threads';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { calculateFibonacciNumber } from '@/utils/computing/fibonacci.utils.js';
-import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
 import { isDev, isTest } from '@/utils/environment.utils.js';
 import { TaskData } from '@/types/index.js';
 import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
+import { messageBrokerManager } from '@/services/queue/messageBroker.service.js';
 
 export class FibonacciService {
   /**
@@ -51,12 +51,13 @@ export class FibonacciService {
     let success = true;
 
     const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
+    const messageBrokerService = messageBrokerManager.getMessageBrokerService();
     try {
       // Store task in Redis with expiration (24 hours)
       await dataStoreService.setTask(taskId, taskData, 86400);
 
       // Send message to RabbitMQ with task ID
-      await rabbitMQService.sendMessage(COMPUTING_QUEUE, {
+      await messageBrokerService.sendMessage(COMPUTING_QUEUE, {
         topic: FIBONACCI_DATA_TYPE,
         taskId,
         data: { n },

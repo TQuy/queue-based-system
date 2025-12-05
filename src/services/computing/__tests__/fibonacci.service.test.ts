@@ -13,22 +13,25 @@ import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
 import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
+import { messageBrokerManager } from '@/services/queue/messageBroker.service.js';
 
 // Mock external dependencies
 jest.mock('../../queue/rabbitmq.service');
 jest.mock('../../datastore/redis.service');
 
-const mockRabbitMQService = rabbitMQService as jest.Mocked<
+const mockMessageBrokerManangerService = messageBrokerManager as jest.Mocked<typeof messageBrokerManager>;
+const mockMessageBrokerService = rabbitMQService as jest.Mocked<
   typeof rabbitMQService
->;
-const mockDataStoreService = redisService as jest.Mocked<typeof redisService>;
+  >;
 const mockDataStoreServiceManager = dataStoreServiceManager as jest.Mocked<typeof dataStoreServiceManager>;
+const mockDataStoreService = redisService as jest.Mocked<typeof redisService>;
 
 // Ensure services are properly mocked
-mockRabbitMQService.sendMessage = jest.fn();
+mockMessageBrokerService.sendMessage = jest.fn();
 mockDataStoreService.setTask = jest.fn();
 mockDataStoreService.updateTaskStatus = jest.fn();
 mockDataStoreServiceManager.getDataStoreServiceInstance = jest.fn(() => mockDataStoreService);
+mockMessageBrokerManangerService.getMessageBrokerService = jest.fn(() => mockMessageBrokerService);
 
 describe('FibonacciService', () => {
   beforeEach(() => {
@@ -175,7 +178,7 @@ describe('FibonacciService', () => {
         // Mock Redis operations to return successful results by default
         mockDataStoreService.setTask.mockResolvedValue(true);
         mockDataStoreService.updateTaskStatus.mockResolvedValue(true);
-        mockRabbitMQService.sendMessage.mockResolvedValue(undefined);
+        mockMessageBrokerService.sendMessage.mockResolvedValue(undefined);
       });
 
       it('should send message to RabbitMQ service successfully', async () => {
@@ -192,7 +195,7 @@ describe('FibonacciService', () => {
           86400
         );
 
-        expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
+        expect(mockMessageBrokerService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
           expect.objectContaining({
             topic: FIBONACCI_DATA_TYPE,
@@ -211,14 +214,14 @@ describe('FibonacciService', () => {
 
       it('should handle RabbitMQ service failure', async () => {
         const error = new Error('RabbitMQ send failed');
-        mockRabbitMQService.sendMessage.mockRejectedValue(error);
+        mockMessageBrokerService.sendMessage.mockRejectedValue(error);
 
         await expect(
           FibonacciService.scheduleFibonacciCalculation(5)
         ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
         expect(mockDataStoreService.setTask).toHaveBeenCalled();
-        expect(mockRabbitMQService.sendMessage).toHaveBeenCalled();
+        expect(mockMessageBrokerService.sendMessage).toHaveBeenCalled();
         expect(mockDataStoreService.updateTaskStatus).toHaveBeenCalledWith(
           expect.any(String),
           'failed'
@@ -227,20 +230,20 @@ describe('FibonacciService', () => {
 
       it('should handle RabbitMQ service rejection', async () => {
         const error = new Error('RabbitMQ connection failed');
-        mockRabbitMQService.sendMessage.mockRejectedValue(error);
+        mockMessageBrokerService.sendMessage.mockRejectedValue(error);
 
         await expect(
           FibonacciService.scheduleFibonacciCalculation(7)
         ).rejects.toThrow('Failed to schedule Fibonacci calculation');
 
         expect(mockDataStoreService.setTask).toHaveBeenCalled();
-        expect(mockRabbitMQService.sendMessage).toHaveBeenCalled();
+        expect(mockMessageBrokerService.sendMessage).toHaveBeenCalled();
       });
 
       it('should handle edge case with zero input', async () => {
         const result = await FibonacciService.scheduleFibonacciCalculation(0);
 
-        expect(mockRabbitMQService.sendMessage).toHaveBeenCalledWith(
+        expect(mockMessageBrokerService.sendMessage).toHaveBeenCalledWith(
           COMPUTING_QUEUE,
           expect.objectContaining({
             topic: FIBONACCI_DATA_TYPE,

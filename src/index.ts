@@ -7,6 +7,7 @@ import { consumerFactory } from '@/services/queue/consumer.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 import { setupSocketServer } from '@/websocket.js';
 import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
+import { messageBrokerManager } from './services/queue/messageBroker.service.js';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
@@ -25,10 +26,11 @@ export function getIO(): SocketIOServer {
 }
 
 export async function startServer() {
-  const app = createApp(redisService);
+  const app = createApp(redisService, rabbitMQService);
   const port: number =
     (process.env['PORT'] && parseInt(process.env['PORT'])) || 3000;
-  await rabbitMQService.connect();
+  const messageBrokerService = messageBrokerManager.getMessageBrokerService();
+  await messageBrokerService.connect();
   const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
   await dataStoreService.connect();
 
@@ -46,18 +48,18 @@ export async function startServer() {
     console.log('[TEST][AMQP] Running RabbitMQ connectivity test...');
     const messageContent = { text: 'Hello, RabbitMQ!' };
 
-    await rabbitMQService.sendMessage('test_queue', messageContent);
+    await messageBrokerService.sendMessage('test_queue', messageContent);
 
-    rabbitMQService.startConsumer(
+    messageBrokerService.startConsumer(
       'test_queue',
       async (msg: any): Promise<boolean> => {
         if (msg && JSON.stringify(msg) === JSON.stringify(messageContent)) {
           console.log('[TEST][AMQP] RabbitMQ test successful:', msg);
 
           // Clean up test queue after successful test
-          await rabbitMQService.cleanup(['test_queue']);
+          await messageBrokerService.cleanup(['test_queue']);
           console.log('[TEST][AMQP] 🧹 Test queue cleaned up');
-          await rabbitMQService.startConsumer(
+          await messageBrokerService.startConsumer(
             'computing_queue',
             (msg: any) => consumerFactory(dataStoreService!, msg)
           );

@@ -8,6 +8,7 @@ import { redisService } from '@/services/datastore/redis.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 import { Application } from 'express';
+import { messageBrokerManager } from '@/services/queue/messageBroker.service.js';
 
 // Load .env for tests
 const cwd = process.cwd();
@@ -19,10 +20,11 @@ describe('Fibonacci Routes E2E Tests', () => {
   beforeAll(async () => {
     // Initialize Redis and RabbitMQ for schedule tests
     try {
-      app = createApp(redisService);
+      app = createApp(redisService, rabbitMQService);
       const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
       await dataStoreService.connect();
-      await rabbitMQService.connect();
+      const messageBrokerService = messageBrokerManager.getMessageBrokerService();
+      await messageBrokerService.connect();
       console.log('✅ Services connected for tests');
     } catch (error) {
       console.warn('⚠️  Failed to connect to Redis/RabbitMQ:', error);
@@ -34,7 +36,8 @@ describe('Fibonacci Routes E2E Tests', () => {
     try {
       const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
       await dataStoreService.disconnect();
-      await rabbitMQService.cleanup([], true);
+      const messageBrokerService = messageBrokerManager.getMessageBrokerService();
+      await messageBrokerService.cleanup([], true);
     } catch (error) {
       console.warn('⚠️  Failed to disconnect services:', error);
     }

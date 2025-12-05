@@ -5,6 +5,8 @@ import { setupSwagger } from '@/config/swagger.js';
 import apiRoutes from '@/routes/api.routes.js';
 import { DatastoreService } from '@/types/datastore.js';
 import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
+import { MessageBrokerService } from '@/types/queue.js';
+import { messageBrokerManager } from '@/services/queue/messageBroker.service.js';
 
 /**
  * Creates and configures an Express application.
@@ -13,8 +15,12 @@ import { dataStoreServiceManager } from '@/services/datastore/datastore.service.
 *
 * @returns {Application} The configured Express application instance.
 */
-export function createApp(dataStore: DatastoreService): Application {
+export function createApp(
+  dataStore: DatastoreService,
+  messageBroker: MessageBrokerService,
+): Application {
   dataStoreServiceManager.setDataStoreServiceInstance(dataStore);
+  messageBrokerManager.setMessageBroker(messageBroker);
   const app: Application = express();
   app.use(morgan('dev'));
   // --- 1. Core Middleware ---

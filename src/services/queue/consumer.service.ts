@@ -1,6 +1,6 @@
 import { DatastoreService } from '@/types/datastore.js';
 import { MessageData } from '@/types/queue.js';
-import { FibonacciConsumerService } from './consumers/fibonacciConsumer.service.js';
+import { FibonacciConsumerService } from '@/services/queue/consumers/fibonacciConsumer.service.js';
 
 export async function consumerFactory(
   dataStoreService: DatastoreService,

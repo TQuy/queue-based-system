@@ -1,4 +1,4 @@
-import { SendMessageOptions } from '@/types/queue.js';
+import { MessageBrokerService, SendMessageOptions } from '@/types/queue.js';
 import type { Channel, ConsumeMessage, ChannelModel } from 'amqplib';
 import { connect as amqpConnect } from 'amqplib';
 
@@ -7,28 +7,16 @@ import { connect as amqpConnect } from 'amqplib';
  * but uses separate channels for publishing and consuming to improve
  * fault tolerance.
  */
-class RabbitMQService {
+class RabbitMQService implements MessageBrokerService {
   private conn: ChannelModel | null = null;
   private publishChannel: Channel | null = null;
   private consumeChannel: Channel | null = null;
   private closing: boolean = false;
 
-  private static instance: RabbitMQService;
-
   // Private constructor for singleton
-  private constructor() { }
+  constructor() { }
 
-  /**
-   * Gets the singleton instance of the RabbitMQService.
-   */
-  public static getInstance(): RabbitMQService {
-    if (!RabbitMQService.instance) {
-      RabbitMQService.instance = new RabbitMQService();
-    }
-    return RabbitMQService.instance;
-  }
-
-  async createChannel() {
+  async createChannel(): Promise<Channel> {
     try {
       const channel = await this.conn!.createChannel();
       return channel;
@@ -266,4 +254,4 @@ class RabbitMQService {
 }
 
 // Export the singleton instance
-export const rabbitMQService = RabbitMQService.getInstance();
+export const rabbitMQService = new RabbitMQService();
