@@ -1,52 +1,19 @@
-import { fibonacciConsumerService } from '@/services/queue/consumer/fibonacciConsumer.service.js';
-import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
-import { WebsocketService } from '@/services/websocket/websocket.service.js';
 import { DatastoreService } from '@/types/datastore.js';
+import { MessageData } from '@/types/queue.js';
+import { FibonacciConsumerService } from './consumers/fibonacciConsumer.service.js';
 
-export const consumerFactory = async (
+export async function consumerFactory(
   dataStoreService: DatastoreService,
-  msg: {
-  topic: string;
-  data: any;
-  taskId: string;
-  },
-): Promise<boolean> => {
+  msg: MessageData,
+): Promise<boolean> {
   console.log('Received message with topic:', msg.topic);
   const parts = msg.topic.split(':');
   if (!parts.length) throw new Error('Empty topic');
   switch (parts[0]) {
     case 'fibonacci': {
       if (parts[1] === 'calculate') {
-        let success = false;
-        let result: number = 0;
-        try {
-          result = await fibonacciConsumerService.consume(
-            msg.data
-          );
-          success = true;
-          console.log(`Fibonacci task consumed with result: ${result}`);
-        } finally {
-          const updateTaskStatus = async () => {
-            if (success) {
-              dataStoreService.updateTask(msg.taskId, { status: 'completed', result: result });
-            } else {
-              dataStoreService.updateTask(msg.taskId, { status: 'failed' });
-            }
-          }
-          const replyThroughWebSocket = async () => {
-            const taskData = await dataStoreService.getTask(msg.taskId);
-            if (taskData) {
-              await WebsocketService.replyWithResult(
-                taskData,
-                success ? FIBONACCI_WS_COMPLETE_EVENT : FIBONACCI_WS_FAILED_EVENT
-              );
-            }
-          }
-          await Promise.all([
-            updateTaskStatus(),
-            replyThroughWebSocket(),
-          ])
-        }
+        const fibonacciConsumerService = new FibonacciConsumerService(dataStoreService);
+        await fibonacciConsumerService.consume(msg);
       }
       break;
     }

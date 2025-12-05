@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import { isDev, isTest } from '@/utils/environment.utils.js';
 
-class FibonacciConsumerService {
+class FibonacciWorkerService {
   async consume({ n }: { n: number }): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       // Determine script path and execution method based on environment
@@ -79,6 +79,5 @@ class FibonacciConsumerService {
   }
 }
 
-const fibonacciConsumerService = new FibonacciConsumerService();
-export { fibonacciConsumerService };
-export default FibonacciConsumerService;
+export const fibonacciWorkerService = new FibonacciWorkerService();
+export default FibonacciWorkerService;
