@@ -11,6 +11,7 @@ class RabbitMQService {
   private conn: ChannelModel | null = null;
   private publishChannel: Channel | null = null;
   private consumeChannel: Channel | null = null;
+  private closing: boolean = false;
 
   private static instance: RabbitMQService;
 
@@ -54,9 +55,15 @@ class RabbitMQService {
         this.conn = null;
       });
       this.conn.on('close', () => {
-        console.warn('[AMQP] RabbitMQ connection closed. Reconnecting...');
-        this.conn = null;
-        setTimeout(() => this.connect(), 5000); // Reconnect after 5s
+        if (!this.closing) {
+          console.warn('[AMQP] RabbitMQ connection closed. Reconnecting...');
+          this.conn = null;
+          setTimeout(() => this.connect(), 5000); // Reconnect after 5s
+        } else {
+          console.log('[AMQP] RabbitMQ connection closed gracefully.');
+          this.closing = false;
+          this.conn = null;
+        }
       });
 
       // 2. Create a dedicated channel for PUBLISHING
@@ -202,6 +209,7 @@ class RabbitMQService {
    * If the connection is kept, also keep the publish channel.
    */
   async cleanup(queues?: string[], closeConnection?: boolean): Promise<void> {
+    console.log('[AMQP] Starting cleanup process...');
     try {
       // Delete test queues if specified
       if (queues && queues.length > 0) {
@@ -212,10 +220,10 @@ class RabbitMQService {
 
       // Close connection
       if (closeConnection && this.conn) {
+        this.closing = true;
         await this.closePublishChannel();
         await this.closeConsumeChannel();
         await this.conn.close();
-        this.conn = null;
       }
     } catch (err) {
       console.error('[AMQP] Error during cleanup:', err);

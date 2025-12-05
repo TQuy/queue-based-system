@@ -1,4 +1,4 @@
-import express, { application } from 'express';
+import express from 'express';
 import morgan from 'morgan';
 import type { Request, Response, Application, NextFunction } from 'express';
 import { setupSwagger } from '@/config/swagger.js';

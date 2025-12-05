@@ -34,9 +34,7 @@ describe('Fibonacci Routes E2E Tests', () => {
     try {
       const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
       await dataStoreService.disconnect();
-      await rabbitMQService.cleanup();
-      // Give time for all async operations to complete before exiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await rabbitMQService.cleanup([], true);
     } catch (error) {
       console.warn('⚠️  Failed to disconnect services:', error);
     }

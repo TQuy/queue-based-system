@@ -11,7 +11,6 @@ import {
 } from '@/services/computing/fibonacci.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { COMPUTING_QUEUE, FIBONACCI_DATA_TYPE } from '@/constants/computing.js';
-import { DatastoreService } from '@/types/datastore.js';
 import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 
