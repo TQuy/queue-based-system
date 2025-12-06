@@ -7,7 +7,7 @@ import { connect as amqpConnect } from 'amqplib';
  * but uses separate channels for publishing and consuming to improve
  * fault tolerance.
  */
-class RabbitMQService implements MessageBrokerService {
+export class RabbitMQService implements MessageBrokerService {
   private conn: ChannelModel | null = null;
   private publishChannel: Channel | null = null;
   private consumeChannel: Channel | null = null;

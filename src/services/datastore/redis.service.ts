@@ -6,7 +6,7 @@ export class RedisService implements DatastoreService {
   private client: RedisClientType | null = null;
   private isConnected = false;
 
-  constructor() {}
+  constructor() { }
 
   private setupEventListeners(): void {
     this.client!.on('connect', () => {
@@ -84,12 +84,16 @@ export class RedisService implements DatastoreService {
    * Disconnect from Redis
    */
   async disconnect(): Promise<void> {
-    if (this.isConnected || this.client!.isReady) {
+    if (this.client) {
       try {
-        await this.client!.destroy();
+        this.client.destroy();
+        this.client = null;
         this.isConnected = false;
       } catch (error) {
         console.error('[Redis] Failed to disconnect from Redis:', error);
+        // Still set to null and disconnected even on error
+        this.client = null;
+        this.isConnected = false;
         throw error;
       }
     }

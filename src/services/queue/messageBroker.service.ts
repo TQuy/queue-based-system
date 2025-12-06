@@ -1,6 +1,6 @@
 import { MessageBrokerService } from "@/types/queue.js";
 
-class MessageBrokerManagerService {
+class MessageBrokerManager {
     private messageBroker: MessageBrokerService | null = null;
 
     constructor() { }
@@ -17,4 +17,4 @@ class MessageBrokerManagerService {
     }
 }
 
-export const messageBrokerManager = new MessageBrokerManagerService();
+export const messageBrokerManager = new MessageBrokerManager();
