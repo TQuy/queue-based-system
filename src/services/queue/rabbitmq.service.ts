@@ -63,7 +63,7 @@ export class RabbitMQService implements MessageBrokerService {
         console.error('[AMQP] publish channel error', err.message);
       });
       this.publishChannel.on('close', () => {
-        console.warn('[AMQP] Publish channel closed.');
+        console.log('[AMQP] Publish channel closed.');
         this.publishChannel = null;
         // Re-create if connection is still active
       });
@@ -77,7 +77,7 @@ export class RabbitMQService implements MessageBrokerService {
         console.error('[AMQP] consume channel error', err.message);
       });
       this.consumeChannel.on('close', () => {
-        console.warn('[AMQP] Consume channel closed.');
+        console.log('[AMQP] Consume channel closed.');
         this.consumeChannel = null;
         // Re-create if connection is still active and re-subscribe consumers
       });

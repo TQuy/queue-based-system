@@ -5,7 +5,7 @@ import { redisService } from '@/services/datastore/redis.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 
 // Create the app instance *once* for all tests in this suite
-const app = createApp(redisService, rabbitMQService);
+const { app } = createApp(redisService, rabbitMQService);
 
 describe('GET /health', () => {
   it('should return 200 OK and status: ok', async () => {

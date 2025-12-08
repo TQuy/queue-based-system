@@ -6,7 +6,7 @@ class DataStoreServiceManager {
         this.dataStore = dataStore || null;
     }
 
-    getDataStoreServiceInstance(): DatastoreService {
+    getDataStoreServiceInstance() {
         if (!this.dataStore) {
             throw new Error('DatastoreService not initialized yet');
         }

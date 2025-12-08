@@ -1,14 +1,14 @@
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { StatusCodes } from 'http-status-codes';
 import dotenv from 'dotenv';
 import path from 'path';
 import { createApp } from '@/app.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
-import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 import { Application } from 'express';
-import { messageBrokerManager } from '@/services/queue/messageBroker.service.js';
+import { MessageBrokerService } from '@/types/queue.js';
+import { DatastoreService } from '@/types/datastore.js';
 
 // Load .env for tests
 const cwd = process.cwd();
@@ -16,14 +16,14 @@ dotenv.config({ path: path.join(cwd, 'config/.env') });
 
 describe('Fibonacci Routes E2E Tests', () => {
   let app: Application;
+  let messageBrokerService: MessageBrokerService;
+  let dataStoreService: DatastoreService;
 
   beforeAll(async () => {
     // Initialize Redis and RabbitMQ for schedule tests
     try {
-      app = createApp(redisService, rabbitMQService);
-      const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
+      ({ app, dataStore: dataStoreService, messageBroker: messageBrokerService } = createApp(redisService, rabbitMQService));
       await dataStoreService.connect();
-      const messageBrokerService = messageBrokerManager.getMessageBrokerService();
       await messageBrokerService.connect();
       console.log('✅ Services connected for tests');
     } catch (error) {
@@ -34,9 +34,7 @@ describe('Fibonacci Routes E2E Tests', () => {
 
   afterAll(async () => {
     try {
-      const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
       await dataStoreService.disconnect();
-      const messageBrokerService = messageBrokerManager.getMessageBrokerService();
       await messageBrokerService.cleanup([], true);
     } catch (error) {
       console.warn('⚠️  Failed to disconnect services:', error);

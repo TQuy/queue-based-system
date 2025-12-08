@@ -1,7 +1,6 @@
 import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from "@/constants/computing.js";
-import { dataStoreServiceManager } from "@/services/datastore/datastore.service.js";
 import { WebsocketService } from "@/services/websocket/websocket.service.js";
-import { DatastoreService } from "@/types/datastore.js";
+import { DatastoreService, TaskData } from "@/types/datastore.js";
 import { MessageData } from "@/types/queue.js";
 import { fibonacciWorkerService } from "@/workers/computing/fibonacciWorker.service.js";
 
@@ -20,26 +19,21 @@ export class FibonacciConsumerService {
             success = true;
             console.log(`Fibonacci task consumed with result: ${result}`);
         } finally {
-            const updateTaskStatus = async () => {
-                if (success) {
-                    this.dataStoreService.updateTask(msg.taskId, { status: 'completed', result: result });
-                } else {
-                    this.dataStoreService.updateTask(msg.taskId, { status: 'failed' });
-                }
+            const taskData = await this.dataStoreService.getTask(msg.taskId);
+            if (!taskData) {
+                console.warn(`Task data not found for Task ID ${msg.taskId}`);
+                return;
             }
-            const replyThroughWebSocket = async () => {
-                const taskData = await this.dataStoreService.getTask(msg.taskId);
-                if (taskData) {
-                    await WebsocketService.replyWithResult(
-                        taskData,
-                        success ? FIBONACCI_WS_COMPLETE_EVENT : FIBONACCI_WS_FAILED_EVENT
-                    );
-                }
-            }
-            await Promise.all([
-                updateTaskStatus(),
-                replyThroughWebSocket(),
-            ])
+            const updatedTaskData = {
+                ...taskData,
+                result: result,
+                status: success ? 'completed' : 'failed',
+            } as TaskData;
+            this.dataStoreService.updateTask(msg.taskId, updatedTaskData);
+            await WebsocketService.replyWithResult(
+                updatedTaskData,
+                success ? FIBONACCI_WS_COMPLETE_EVENT : FIBONACCI_WS_FAILED_EVENT
+            );
         }
     }
 }

@@ -7,51 +7,36 @@ import { type Application } from 'express';
 import http from 'http';
 import { Server as IOServer } from 'socket.io';
 import { createApp } from '@/app.js';
-import { dataStoreServiceManager } from '@/services/datastore/datastore.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
-import { messageBrokerManager } from '@/services/queue/messageBroker.service.js';
 import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
 import { setupSocketServer } from '@/websocket.js';
+import { DatastoreService } from '@/types/datastore.js';
+import { MessageBrokerService } from '@/types/queue.js';
+import { setupMessageBroker } from '@/index.js';
 // ...existing code...
 
 const cwd = process.cwd();
 dotenv.config({ path: path.join(cwd, 'config/.env') });
-
-describe.only('Fibonacci Routes E2E Tests', () => {
+describe('Fibonacci Routes E2E Tests', () => {
     let app: Application;
+    let dataStoreService: DatastoreService;
+    let messageBrokerService: MessageBrokerService;
     let httpServer: http.Server;
     let socketIoServer: IOServer;
     let serverUrl: string;
-    const taskSocketMap = new Map<string, string>(); // taskId -> socketId
 
     beforeAll(async () => {
         // Initialize app and services
         try {
-            app = createApp(redisService, rabbitMQService);
-            const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
+            ({ app, dataStore: dataStoreService, messageBroker: messageBrokerService } = createApp(redisService, rabbitMQService));
             await dataStoreService.connect();
-            const messageBrokerService = messageBrokerManager.getMessageBrokerService();
             await messageBrokerService.connect();
-            // ({ httpServer, io: socketIoServer } = await setupSocketServer(app, dataStoreService));
-            // Start an in-test HTTP server and attach a Socket.IO server
-            httpServer = http.createServer(app);
-            socketIoServer = new IOServer(httpServer, { cors: { origin: '*' } });
-
-            // Simple connection handler: map incoming taskId -> socket.id
-            socketIoServer.on('connection', (socket) => {
-                const taskId = socket.handshake.query?.taskId as string | undefined;
-                if (taskId) {
-                    taskSocketMap.set(taskId, socket.id);
-                }
-
-                socket.on('disconnect', () => {
-                    // remove any mappings that reference this socket
-                    for (const [t, sId] of taskSocketMap.entries()) {
-                        if (sId === socket.id) taskSocketMap.delete(t);
-                    }
-                });
-            });
+            ({ httpServer, io: socketIoServer } = setupSocketServer(app, dataStoreService));
+            await setupMessageBroker(
+                messageBrokerService,
+                dataStoreService
+            );
 
             // Listen on ephemeral port
             await new Promise<void>((resolve) => httpServer.listen(0, resolve));
@@ -70,18 +55,12 @@ describe.only('Fibonacci Routes E2E Tests', () => {
         try {
             // Close Socket.IO and HTTP server
             if (socketIoServer) await socketIoServer.close();
-            
+
             // Disconnect datastore (which should be redisService)
-            const dataStoreService = dataStoreServiceManager.getDataStoreServiceInstance();
             await dataStoreService.disconnect();
-            
-            // Also explicitly disconnect redisService singleton to clear any lingering references
-            await redisService.disconnect();
-            
             // Clean up message broker
-            const messageBrokerService = messageBrokerManager.getMessageBrokerService();
             await messageBrokerService.cleanup([], true);
-            
+
             // Give time for all async operations to settle
             await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
@@ -92,7 +71,7 @@ describe.only('Fibonacci Routes E2E Tests', () => {
     // ...existing tests...
 
     // Replace the original websocket polling test body with this implementation
-    it.only('should be able to poll for result of scheduled fibonacci task', async () => {
+    it('should be able to poll for result of scheduled fibonacci task', async () => {
         const input = 7;
 
         // Schedule the task
@@ -108,50 +87,44 @@ describe.only('Fibonacci Routes E2E Tests', () => {
             query: { taskId },
             transports: ['websocket'],
         };
-        const socket = io(serverUrl, connectionOptions);
-
+        const clientSocket = io(serverUrl, connectionOptions);
         // Wait for client to connect
         await new Promise<void>((resolve, reject) => {
-            const t = setTimeout(() => reject(new Error('Socket connect timeout')), 5000);
-            socket.on('connect', () => {
-                clearTimeout(t);
+            clientSocket.on('connect', () => {
+                console.log('[socket.io] Client connected to test Socket.IO server');
                 resolve();
             });
-            socket.on('connect_error', (err: any) => {
-                clearTimeout(t);
+            clientSocket.on('disconnect', () => {
+                console.log('[socket.io] Client disconnected');
+            });
+            clientSocket.on('connect_error', (err: any) => {
                 reject(err);
             });
         });
 
-        // Simulate the backend publishing the result to the socket identified by taskId
-        const socketId = taskSocketMap.get(taskId);
-        expect(socketId).toBeDefined();
-
         // Prepare a promise that resolves when the client receives the event
         const received = new Promise<any>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Did not receive websocket event in time')), 5000);
-
-            socket.on(FIBONACCI_WS_COMPLETE_EVENT, (data: any) => {
-                clearTimeout(timeout);
+            clientSocket.on(FIBONACCI_WS_COMPLETE_EVENT, (data: any) => {
+                console.log('[socket.io] Client received complete event:', data);
                 resolve(data);
             });
 
-            socket.on(FIBONACCI_WS_FAILED_EVENT, (data: any) => {
-                clearTimeout(timeout);
+            clientSocket.on(FIBONACCI_WS_FAILED_EVENT, (data: any) => {
+                console.log('[socket.io] Client received failed event:', data);
                 reject(new Error(`Received failed event: ${JSON.stringify(data)}`));
             });
         });
 
         // Emit from the test-side Socket.IO server to that socketId
         const expectedResult = 13; // F(7)
-        socketIoServer.to(socketId!).emit(FIBONACCI_WS_COMPLETE_EVENT, { taskId, result: expectedResult });
 
         const data = await received;
+        console.log('[socket.io] Test received data from websocket:', data);
         expect(data).toBeDefined();
         expect(data.taskId).toBe(taskId);
         expect(data.result).toBe(expectedResult);
 
         // Cleanup client
-        socket.disconnect();
-    });
+        clientSocket.disconnect();
+    }, 30000);
 });

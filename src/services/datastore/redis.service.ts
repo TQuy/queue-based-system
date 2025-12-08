@@ -49,6 +49,7 @@ export class RedisService implements DatastoreService {
           socket: {
             reconnectStrategy: (retries: number) =>
               Math.min(retries * 50, 1000),
+            maxReconnectAttempts: 0,
           },
         };
 
@@ -56,7 +57,7 @@ export class RedisService implements DatastoreService {
 
         // Set up event listeners
         this.setupEventListeners();
-        await this.client!.connect();
+        await this.client.connect();
       } catch (error) {
         console.error('[Redis] Failed to connect to Redis:', error);
         throw error;
@@ -84,10 +85,9 @@ export class RedisService implements DatastoreService {
    * Disconnect from Redis
    */
   async disconnect(): Promise<void> {
-    if (this.client) {
+    if (this.isConnected || this.client!.isReady) {
       try {
-        this.client.destroy();
-        this.client = null;
+        this.client!.destroy();
         this.isConnected = false;
       } catch (error) {
         console.error('[Redis] Failed to disconnect from Redis:', error);
@@ -118,7 +118,6 @@ export class RedisService implements DatastoreService {
       } else {
         await this.client!.set(key, value);
       }
-
       if (isDev()) {
         console.log(
           `📝 [Redis] Task ${taskId} stored with status: ${taskData.status}`
@@ -184,13 +183,13 @@ export class RedisService implements DatastoreService {
 
       if (isDev()) {
         console.log(
-          `📝 [Redis] Task ${taskId} updated with status: ${updatedTask.status}`
+          `📝 [Redis] Task ${taskId} updated with data: ${JSON.stringify(updatedTask)}`
         );
       }
 
       return true;
     } catch (error) {
-      console.error('[Redis] Failed to update task in Redis:', error);
+      console.error(new Error('[Redis] Failed to update task in Redis:', { cause: error }));
       return false;
     }
   }

@@ -18,7 +18,11 @@ import { messageBrokerManager } from '@/services/queue/messageBroker.service.js'
 export function createApp(
   dataStore: DatastoreService,
   messageBroker: MessageBrokerService,
-): Application {
+): {
+  app: Application;
+  dataStore: DatastoreService;
+  messageBroker: MessageBrokerService;
+} {
   dataStoreServiceManager.setDataStoreServiceInstance(dataStore);
   messageBrokerManager.setMessageBroker(messageBroker);
   const app: Application = express();
@@ -65,5 +69,9 @@ export function createApp(
     });
   });
 
-  return app
+  return {
+    app,
+    dataStore: dataStoreServiceManager.getDataStoreServiceInstance(),
+    messageBroker: messageBrokerManager.getMessageBrokerService(),
+  }
 };

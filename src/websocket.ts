@@ -1,10 +1,9 @@
-import { createServer } from 'node:http';
 import type { Application } from 'express';
-import { Server, Socket } from 'socket.io';
-import { FIBONACCI_WS_COMPLETE_EVENT, FIBONACCI_WS_FAILED_EVENT } from '@/constants/computing.js';
-import { isTaskCompleted, isTaskFailed } from '@/utils/datastore/datastore.utils.js';
-import { DatastoreService, TaskData } from '@/types/index.js';
-import { WebsocketService } from '@/services/websocket/websocket.service.js';
+import { createServer } from 'node:http';
+import { Server } from 'socket.io';
+import { DatastoreService } from '@/types/index.js';
+import { taskCommunicationFactory } from '@/services/websocket/factory.js';
+import { websocketManager } from '@/services/websocket/websocketManager.service.js';
 
 
 export function setupSocketServer(
@@ -23,15 +22,17 @@ export function setupSocketServer(
     });
 
     // Basic connection event handler
-    io.on('connection', async (socket) => {
-        console.log(`User connected: ${socket.id}`);
+    io.on('connection', (socket) => {
+        console.log(`[socket.io] User connected: ${socket.id}`);
         const taskId = socket.handshake.query.taskId as string;
         if (taskId) {
-            const taskData = await dataStoreService.getTask(taskId);
-            if (taskData) {
-                console.log(`TaskData associated with taskId ${taskId}: ${JSON.stringify(taskData)}`)
-                await taskCommunicationFactory(taskData, socket, dataStoreService);
-            }
+            // response with task info
+            dataStoreService.getTask(taskId).then(async (taskData) => {
+                if (taskData) {
+                    console.log(`[socket.io] TaskData associated with taskId ${taskId}: ${JSON.stringify(taskData)}`)
+                    await taskCommunicationFactory(taskData, socket, dataStoreService);
+                }
+            });
         }
 
         // Handle a disconnection event
@@ -41,54 +42,14 @@ export function setupSocketServer(
 
         // Listen for a custom event from the client
         socket.on('chat message', (msg: string) => {
-            console.log(`message from ${socket.id}: ${msg}`);
+            console.log(`[socket.io] message from ${socket.id}: ${msg}`);
             // Broadcast the message to everyone
             io.emit('chat message', msg);
         });
     });
 
+    // Exported reference for other modules to use
+    websocketManager.setIOInstance(io);
+
     return { httpServer, io };
-}
-
-async function taskCommunicationFactory(
-    taskData: TaskData,
-    socket: Socket,
-    dataStoreService: DatastoreService
-): Promise<void> {
-    switch (taskData.type) {
-        case 'fibonacci:calculate':
-            await handleCommunicationFibonacciTask(socket, taskData, dataStoreService);
-            break;
-        default:
-            throw new Error(`No handler for task type: ${taskData.type}`);
-    }
-}
-
-async function handleCommunicationFibonacciTask(
-    socket: Socket,
-    taskData: TaskData,
-    dataStoreService: DatastoreService
-): Promise<void> {
-    if (isTaskCompleted(taskData)) {
-        // If task already completed, send result immediately
-        await WebsocketService.replyWithResult(
-            {
-                ...taskData,
-                socketId: socket.id
-            },
-            FIBONACCI_WS_COMPLETE_EVENT
-        );
-    } else if (isTaskFailed(taskData)) {
-        await WebsocketService.replyWithResult(
-            {
-                ...taskData,
-                socketId: socket.id
-            },
-            FIBONACCI_WS_FAILED_EVENT
-        );
-    }
-    else {
-        // assign socketId to task for future response
-        await dataStoreService.updateTask(taskData.id, { socketId: socket.id });
-    }
 }

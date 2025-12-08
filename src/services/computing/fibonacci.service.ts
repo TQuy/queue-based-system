@@ -72,6 +72,7 @@ export class FibonacciService {
     } finally {
       const status = success ? 'queued' : 'failed';
       try {
+        console.log(`Updating task ${taskId} status to ${status}`);
         await dataStoreService.updateTaskStatus(taskId, status);
       } catch (updateError) {
         console.error(
