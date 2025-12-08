@@ -29,7 +29,7 @@ export class FibonacciConsumerService {
                 result: result,
                 status: success ? 'completed' : 'failed',
             } as TaskData;
-            this.dataStoreService.updateTask(msg.taskId, updatedTaskData);
+            await this.dataStoreService.updateTask(msg.taskId, updatedTaskData);
             await WebsocketService.replyWithResult(
                 updatedTaskData,
                 success ? FIBONACCI_WS_COMPLETE_EVENT : FIBONACCI_WS_FAILED_EVENT

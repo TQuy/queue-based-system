@@ -135,6 +135,7 @@ export class RedisService implements DatastoreService {
    * Get task data from Redis
    */
   async getTask(taskId: string): Promise<TaskData | null> {
+    console.log('[Redis] Getting task with ID:', taskId);
     try {
       await this.ensureConnection();
 
