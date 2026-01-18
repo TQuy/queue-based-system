@@ -1,20 +1,19 @@
 import { DatastoreService } from '@/types/datastore.js';
-import { MessageData, QueueTypes } from '@/types/queue.js';
-import { FibonacciConsumerService } from '@/services/queue/consumers/fibonacciConsumer.service.js';
+import { MessageBrokerService, MessageData } from '@/types/queue.js';
+import { FibonacciConsumerService } from '@/consumers/fibonacciConsumer.service.js';
 
 export async function consumerFactory(
   dataStoreService: DatastoreService,
+  messageBrokerManager: MessageBrokerService,
   msg: MessageData,
-  queueType: QueueTypes
 ): Promise<boolean> {
-  console.log('Received message with topic:', msg.topic);
   const parts = msg.topic.split(':');
   if (!parts.length) throw new Error('Empty topic');
   switch (parts[0]) {
     case 'fibonacci': {
       if (parts[1] === 'calculate') {
-        const fibonacciConsumerService = new FibonacciConsumerService(dataStoreService);
-        await fibonacciConsumerService.consume(msg, queueType);
+        const fibonacciConsumerService = new FibonacciConsumerService(dataStoreService, messageBrokerManager);
+        await fibonacciConsumerService.consume(msg);
       }
       break;
     }

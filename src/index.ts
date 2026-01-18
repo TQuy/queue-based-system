@@ -6,8 +6,11 @@ import { rabbitMQService } from '@/services/queue/rabbitmq.service.js';
 import { consumerFactory } from '@/services/queue/consumer.service.js';
 import { redisService } from '@/services/datastore/redis.service.js';
 import { setupSocketServer } from '@/websocket.js';
-import { MessageBrokerService } from './types/queue.js';
-import { DatastoreService } from './types/datastore.js';
+import { MessageBrokerService } from '@/types/queue.js';
+import { DatastoreService } from '@/types/datastore.js';
+import { COMPUTING_QUEUE, RESPONSE_QUEUE } from '@/constants/computing.js';
+import { queueTypes } from '@/constants/queue.js';
+import { isWorkerDecoupled } from '@/utils/environment.utils.js';
 
 // Get the current working directory (where you run the command)
 const cwd = process.cwd();
@@ -17,35 +20,18 @@ export async function setupMessageBroker(
   messageBrokerService: MessageBrokerService,
   dataStoreService: DatastoreService
 ) {
-  // Test RabbitMQ connection (only in development)
-  if (process.env['NODE_ENV'] !== 'production') {
-    console.log('[TEST][AMQP] Running RabbitMQ connectivity test...');
-    const messageContent = { text: 'Hello, RabbitMQ!' };
-
-    await messageBrokerService.sendMessage('test_queue', messageContent);
-
-    messageBrokerService.startConsumer(
-      'test_queue',
-      async (msg: any): Promise<boolean> => {
-        if (msg && JSON.stringify(msg) === JSON.stringify(messageContent)) {
-          console.log('[TEST][AMQP] RabbitMQ test successful:', msg);
-
-          // Clean up test queue after successful test
-          await messageBrokerService.cleanup(['test_queue']);
-          console.log('[TEST][AMQP] 🧹 Test queue cleaned up');
-          await messageBrokerService.startConsumer(
-            'computing_queue',
-            (msg: any) => consumerFactory(dataStoreService!, msg)
-          );
-
-          return true;
-        } else if (msg) {
-          console.log('[TEST][AMQP] ⚠️ Unexpected message:', msg);
-        } else {
-          console.log('[TEST][AMQP] No message received');
-        }
-        return false;
-      }
+  console.log(`[ENV] isWorkerDecoupled(): ${isWorkerDecoupled()}`)
+  if (isWorkerDecoupled()) {
+    console.log('[AMQP] Setting up response consumer for decoupled workers...');
+    await messageBrokerService.startResponseConsumer(
+      RESPONSE_QUEUE,
+      (msg: any) => consumerFactory(dataStoreService!, msg, queueTypes.RESPONSE)
+    )
+  } else {
+    console.log('[AMQP] Setting up consumer for coupled workers...');
+    await messageBrokerService.startConsumer(
+      COMPUTING_QUEUE,
+      (msg: any) => consumerFactory(dataStoreService!, msg, queueTypes.EXECUTE)
     );
   }
 }
@@ -60,10 +46,8 @@ export async function startServer() {
     (process.env['PORT'] && parseInt(process.env['PORT'])) || 3000;
   await messageBrokerService.connect();
   await dataStoreService.connect();
-
-  // Setup Socket.IO with the Express app
+  setupMessageBroker(messageBrokerService, dataStoreService);
   const { httpServer } = setupSocketServer(app, dataStoreService);
-
   httpServer.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
   });

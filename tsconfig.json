@@ -29,7 +29,7 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
     }
   },
   "include": [
@@ -37,7 +37,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "workers"
   ],
   "ts-node": {
     "esm": true,

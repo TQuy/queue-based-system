@@ -1,6 +1,6 @@
-import { MessageBrokerService, SendMessageOptions } from '@/types/queue.js';
 import type { Channel, ConsumeMessage, ChannelModel } from 'amqplib';
 import { connect as amqpConnect } from 'amqplib';
+import { MessageBrokerService, SendMessageOptions } from '@/types/queue.js';
 
 /**
  * A production-ready RabbitMQ service that manages a single connection
@@ -11,7 +11,6 @@ export class RabbitMQService implements MessageBrokerService {
   private conn: ChannelModel | null = null;
   private publishChannel: Channel | null = null;
   private consumeChannel: Channel | null = null;
-  private responseChannel: Channel | null = null;
   private closing: boolean = false;
 
   // Private constructor for singleton
@@ -82,20 +81,6 @@ export class RabbitMQService implements MessageBrokerService {
         this.consumeChannel = null;
         // Re-create if connection is still active and re-subscribe consumers
       });
-
-      // 3. Create a dedicated channel for responsing
-      this.responseChannel = await this.conn.createChannel();
-      console.log('[AMQP] Response channel created');
-
-      // Handle response channel errors
-      this.responseChannel.on('error', err => {
-        console.error('[AMQP] response channel error', err.message);
-      });
-      this.responseChannel.on('close', () => {
-        console.log('[AMQP] Response channel closed.');
-        this.responseChannel = null;
-        // Re-create if connection is still active and re-subscribe consumers
-      });
     } catch (err) {
       console.error('[AMQP] Failed to connect to RabbitMQ', err);
       // Retry connection after a delay
@@ -109,10 +94,6 @@ export class RabbitMQService implements MessageBrokerService {
 
   getPublishChannel(): Channel | null {
     return this.publishChannel;
-  }
-
-  getResponseChannel(): Channel | null {
-    return this.responseChannel;
   }
 
   /**
@@ -210,65 +191,6 @@ export class RabbitMQService implements MessageBrokerService {
     }
   }
 
-  async startResponseConsumer(
-    queue: string,
-    onMessage: (msg: any) => Promise<boolean>
-  ) {
-    if (!this.responseChannel) {
-      console.error('[AMQP] No response channel found. Is service connected?');
-      // Retry, as channel might be reconnecting
-      setTimeout(() => this.startResponseConsumer(queue, onMessage), 5000);
-      return;
-    }
-
-    try {
-      // 1. Assert the queue
-      await this.responseChannel.assertQueue(queue, { durable: true });
-
-      // 2. Set prefetch to 1. This ensures the consumer only gets one
-      // message at a time, preventing it from being overloaded.
-      // It won't receive a new message until it acks the current one.
-      this.responseChannel.prefetch(1);
-
-      // 3. Start consuming messages
-      console.log(`[AMQP] Waiting for messages in queue: '${queue}'`);
-
-      this.responseChannel.consume(queue, async (msg: ConsumeMessage | null) => {
-        console.log(`[AMQP] Message received in queue: ${JSON.stringify(msg)}`);
-        if (msg !== null) {
-          try {
-            // Process the message
-            const content = JSON.parse(msg.content.toString());
-            const success = await onMessage(content);
-
-            if (success) {
-              // Acknowledge the message (tells RabbitMQ we've processed it)
-              this.responseChannel?.ack(msg);
-            } else {
-              // Negative acknowledgement (tells RabbitMQ it failed)
-              // 'false' at the end means don't requeue it,
-              // which could prevent infinite loops.
-              // You should have a Dead-Letter Exchange (DLX) setup
-              // to handle these failed messages.
-              this.responseChannel?.nack(msg, false, false);
-            }
-          } catch (e) {
-            console.error('[AMQP] Error processing message', e);
-            // Nack the message on error
-            this.responseChannel?.nack(msg, false, false);
-          }
-        }
-      });
-    } catch (err) {
-      console.error(
-        `[AMQP] Failed to start consumer for queue '${queue}'`,
-        err
-      );
-      // Retry
-      setTimeout(() => this.startResponseConsumer(queue, onMessage), 5000);
-    }
-  }
-
   /**
    * Comprehensive cleanup method for test environments.
    * Deletes specified queues and closes all channels and connections.
@@ -289,7 +211,6 @@ export class RabbitMQService implements MessageBrokerService {
         this.closing = true;
         await this.closePublishChannel();
         await this.closeConsumeChannel();
-        await this.closeResponseChannel();
         await this.conn.close();
       }
     } catch (err) {
@@ -297,21 +218,17 @@ export class RabbitMQService implements MessageBrokerService {
     }
   }
 
-  async closeResponseChannel(): Promise<void> {
-    if (this.responseChannel) {
-      await this.responseChannel.close();
-    }
-  }
-
   async closePublishChannel(): Promise<void> {
     if (this.publishChannel) {
       await this.publishChannel.close();
+      this.publishChannel = null;
     }
   }
 
   async closeConsumeChannel(): Promise<void> {
     if (this.consumeChannel) {
       await this.consumeChannel.close();
+      this.consumeChannel = null;
     }
   }
 

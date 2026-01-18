@@ -12,15 +12,19 @@ export class WebsocketService {
     ) {
         const socketId = data.socketId;
         if (!socketId) {
-            console.log(`No socketId found for task ${data.id}`);
+            console.log(`[socket.io] No socketId found for task ${data.id}`);
             return;
         }
         const io = websocketManager.getIOInstance();
-        io.to(socketId).emit(event, {
-            taskId: data.id,
-            result: data.result
-        });
-        console.log(`Sent result ${data.result} for Task ID ${data.id} to client ${socketId}`);
+        // Add a small delay to ensure the client (e.g., Postman) has time to set up event listeners
+        // This helps with intermittent issues where the event is emitted before the client is ready
+        setTimeout(() => {
+            io.to(socketId).emit(event, {
+                taskId: data.id,
+                result: data.result
+            });
+            console.log(`[socket.io] Sent result ${JSON.stringify(data.result)} for Task ID ${data.id} to client ${socketId}`);
+        }, 500); // 500ms delay
     }
 
     static async handleCommunicationFibonacciTask(

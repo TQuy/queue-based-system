@@ -1,5 +1,5 @@
 {
-  "name": "media-prototype-2",
+  "name": "media-worker",
   "version": "1.0.0",
   "description": "TypeScript Express.js server with strict type checking",
   "main": "dist/index.js",
@@ -33,6 +33,7 @@
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tsx": "^4.19.2",
     "uuid": "^13.0.0",
     "zod": "^4.1.12"
   },
@@ -54,7 +55,6 @@
     "swagger-autogen": "^2.23.7",
     "ts-jest": "^29.2.5",
     "tsc-alias": "^1.8.10",
-    "tsx": "^4.21.0",
     "typescript": "^5.6.3"
   }
 }

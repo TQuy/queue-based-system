@@ -1,4 +1,3 @@
-import { queueTypes } from "@/constants/queue.js";
 import { Channel } from "amqplib";
 
 export interface SendMessageOptions {
@@ -12,12 +11,30 @@ export interface MessageData {
     taskId: string;
 }
 
+export interface FibonacciMessageData extends MessageData {
+    data: {
+        n: number;
+    };
+}
+
+export interface FibonacciResultMessageData extends MessageData {
+    data: {
+        n: number;
+        result: number;
+    };
+}
+
+export interface QueueMessage {
+    topic: string;
+    data: any;
+    taskId: string;
+}
+
 export interface MessageBrokerService {
     connect(): Promise<void>;
     cleanup(queues: string[], closeConnection?: boolean): Promise<void>;
-    sendMessage(queue: string, message: any, options?: SendMessageOptions): Promise<void>;
+    sendMessage(queue: string, message: QueueMessage, options?: SendMessageOptions): Promise<void>;
     startConsumer(queue: string, onMessage: (msg: any) => Promise<boolean>): Promise<void>;
-    startResponseConsumer(queue: string, onMessage: (msg: any) => Promise<boolean>): Promise<void>;
     createChannel(): Promise<Channel>;
     getConsumerChannel(): any;
     getPublishChannel(): any;
@@ -26,5 +43,3 @@ export interface MessageBrokerService {
     closePublishChannel(): Promise<void>;
     deleteQueue(queue: string): Promise<boolean>;
 }
-
-export type QueueTypes = typeof queueTypes[keyof typeof queueTypes];

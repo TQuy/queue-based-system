@@ -5,7 +5,3 @@ export function isTest() {
 export function isDev() {
   return process.env['NODE_ENV'] === 'development';
 }
-
-export function isWorkerDecoupled() {
-  return process.env['DECOUPLED_WORKERS'] === '1';
-}

@@ -35,7 +35,9 @@ export class FibonacciService {
     return sequence;
   }
 
-  static async scheduleFibonacciCalculation(n: number): Promise<{ taskId: string }> {
+  static async scheduleFibonacciCalculation(
+    n: number,
+  ): Promise<{ taskId: string }> {
     // Generate unique task ID
     const taskId = uuidv4();
 
@@ -72,7 +74,6 @@ export class FibonacciService {
     } finally {
       const status = success ? 'queued' : 'failed';
       try {
-        console.log(`Updating task ${taskId} status to ${status}`);
         await dataStoreService.updateTaskStatus(taskId, status);
       } catch (updateError) {
         console.error(
@@ -84,19 +85,14 @@ export class FibonacciService {
 
   static async calculateAsync(n: number): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      // In dev/test: use tsx to run TS files with path aliases
-      // In prod: use compiled JS (no runtime TS/path-alias overhead)
-      const isDevTest = isTest() || isDev();
+      // Always use compiled JS to avoid path alias resolution issues in Worker threads
+      // Worker threads don't support TypeScript path aliases, so we depend on pre-compiled JS
       const rootDir = process.cwd();
+      const workerPath = path.join(rootDir, 'dist', 'workers', 'computing', 'fibonacci.workerThread.js');
 
-      let workerPath: string = isDevTest ?
-        path.join(rootDir, 'dist', 'workers', 'computing', 'fibonacci.workerThread.js') :
-        path.join(rootDir, 'workers', 'computing', 'fibonacci.workerThread.js');
-      let execArgs: string[] = [];
-
-      // 🚀 Worker Initialization
+      console.log('Initializing worker at path:', workerPath);
       const worker = new Worker(workerPath, {
-        execArgv: execArgs,
+        // No execArgv needed - worker uses compiled JS
       });
 
       worker.postMessage({ n });

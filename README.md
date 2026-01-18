@@ -17,3 +17,13 @@ then you start the ExpressJS server in development mode with:
 ```
 npm run dev
 ```
+**Note:** 
+- If you want to run async process with decoupled workers, you have to to run
+`npm run build`
+to transpile typescript to javascript before starting the services
+
+
+### Decouple workers
+1. set `DECOUPLED_WORKERS=1` in the `config/.env` file  
+2. Navigate in the the folder `./workers`
+3. Start the worker process with `npm run dev` (remember to build after updating the worker code)

@@ -160,6 +160,7 @@ export class RedisService implements DatastoreService {
     taskId: string,
     updateData: Partial<TaskData>
   ): Promise<boolean> {
+    console.log('[Redis] Updating task with ID:', taskId);
     try {
       await this.ensureConnection();
 
@@ -202,7 +203,6 @@ export class RedisService implements DatastoreService {
     taskId: string,
     status: TaskData['status']
   ): Promise<boolean> {
-    console.log(`[Redis] Updating task ${taskId} status to ${status}`);
     const updateData: Partial<TaskData> = { status };
 
     if (status === 'completed') {
