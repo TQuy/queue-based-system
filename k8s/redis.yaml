@@ -33,7 +33,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: redis-password
+              key: REDIS_PASSWORD
         volumeMounts:
         - name: redis-data
           mountPath: /data

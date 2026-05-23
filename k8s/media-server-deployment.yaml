@@ -40,17 +40,17 @@ spec:
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: rabbitmq-username
+              key: RABBITMQ_USERNAME
         - name: RABBITMQ_PASSWORD
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: rabbitmq-password
+              key: RABBITMQ_PASSWORD
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: redis-password
+              key: REDIS_PASSWORD
         ports:
         - containerPort: 3000
 
@@ -62,7 +62,7 @@ metadata:
 spec:
   selector:
     app: media-server
-  sessionAffinity: ClientIP
+  sessionAffinity: None
   ports:
   - name: http
     port: 3000

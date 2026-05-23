@@ -35,17 +35,17 @@ spec:
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: rabbitmq-username
+              key: RABBITMQ_USERNAME
         - name: RABBITMQ_PASSWORD
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: rabbitmq-password
+              key: RABBITMQ_PASSWORD
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: media-secrets
-              key: redis-password
+              key: REDIS_PASSWORD
         resources:
           requests:
             memory: "128Mi"
